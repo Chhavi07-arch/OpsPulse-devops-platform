@@ -1,0 +1,71 @@
+{{- $backend := include "opspulse.componentName" (dict "ctx" . "component" "backend") }}
+{{- $hasOperator := .Capabilities.APIVersions.Has "monitoring.coreos.com/v1" }}
+{{- if and .Values.monitoring.serviceMonitor.enabled $hasOperator }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ $backend }}
+  labels:
+    {{- include "opspulse.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "opspulse.selectorLabels" (dict "ctx" . "component" "backend") | nindent 6 }}
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: {{ .Values.monitoring.serviceMonitor.interval }}
+{{- end }}
+{{- if and .Values.monitoring.prometheusRule.enabled $hasOperator }}
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ include "opspulse.fullname" . }}-alerts
+  labels:
+    {{- include "opspulse.labels" . | nindent 4 }}
+spec:
+  groups:
+    - name: opspulse.rules
+      rules:
+        - alert: OpsPulseBackendDown
+          expr: absent(up{service="{{ $backend }}"} == 1)
+          for: 2m
+          labels: { severity: critical }
+          annotations:
+            summary: No OpsPulse backend replica is being scraped successfully.
+        - alert: OpsPulseHighErrorRate
+          expr: |
+            sum(rate(http_requests_total{service="{{ $backend }}", status=~"5.."}[5m]))
+              / clamp_min(sum(rate(http_requests_total{service="{{ $backend }}"}[5m])), 1e-9) > 0.05
+          for: 5m
+          labels: { severity: warning }
+          annotations:
+            summary: More than 5% of API requests are failing with 5xx errors.
+        - alert: OpsPulseSlowRequests
+          expr: |
+            histogram_quantile(0.95, sum by (le) (rate(http_request_duration_highr_seconds_bucket{service="{{ $backend }}"}[5m]))) > 1
+          for: 10m
+          labels: { severity: warning }
+          annotations:
+            summary: 95th percentile API latency is above 1 second.
+        - alert: OpsPulseSev1Open
+          expr: max(opspulse_active_incidents{severity="SEV1", service="{{ $backend }}"}) > 0
+          for: 1m
+          labels: { severity: critical }
+          annotations:
+            summary: A SEV1 incident is open in OpsPulse.
+{{- end }}
+{{- if .Values.monitoring.grafanaDashboard.enabled }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "opspulse.fullname" . }}-dashboard
+  labels:
+    {{- include "opspulse.labels" . | nindent 4 }}
+    grafana_dashboard: "1"
+data:
+  opspulse.json: |-
+    {{- .Files.Get "dashboards/opspulse.json" | nindent 4 }}
+{{- end }}

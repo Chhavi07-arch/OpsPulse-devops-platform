@@ -1,0 +1,141 @@
+{{- $ctx := dict "ctx" . "component" "backend" }}
+{{- $dbHost := include "opspulse.componentName" (dict "ctx" . "component" "postgres") }}
+{{- $dbPassword := dict "name" "OPSPULSE_DB_PASSWORD" "valueFrom" (dict "secretKeyRef" (dict "name" (include "opspulse.dbSecretName" .) "key" .Values.postgresql.auth.secretKey)) }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "opspulse.componentName" $ctx }}
+  labels:
+    {{- include "opspulse.labels" . | nindent 4 }}
+    app.kubernetes.io/component: backend
+spec:
+  {{- if not .Values.backend.autoscaling.enabled }}
+  replicas: {{ .Values.backend.replicaCount }}
+  {{- end }}
+  revisionHistoryLimit: 5
+  selector:
+    matchLabels:
+      {{- include "opspulse.selectorLabels" $ctx | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "opspulse.selectorLabels" $ctx | nindent 8 }}
+      annotations:
+        # Roll the pods whenever configuration changes.
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      initContainers:
+        - name: wait-for-db
+          image: "{{ .Values.postgresql.image.repository }}:{{ .Values.postgresql.image.tag }}"
+          imagePullPolicy: {{ .Values.postgresql.image.pullPolicy }}
+          command: ["sh", "-c", "until pg_isready -h {{ $dbHost }} -p 5432 -U {{ .Values.postgresql.auth.username }}; do echo waiting for database; sleep 2; done"]
+          securityContext:
+            {{- include "opspulse.containerSecurityContext" . | nindent 12 }}
+        - name: migrate
+          image: {{ include "opspulse.image" (dict "image" .Values.backend.image "component" "backend") | quote }}
+          imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
+          command: ["alembic", "upgrade", "head"]
+          envFrom:
+            - configMapRef:
+                name: {{ include "opspulse.componentName" $ctx }}
+          env:
+            - {{ toYaml $dbPassword | nindent 14 | trim }}
+          securityContext:
+            {{- include "opspulse.containerSecurityContext" . | nindent 12 }}
+      containers:
+        - name: backend
+          image: {{ include "opspulse.image" (dict "image" .Values.backend.image "component" "backend") | quote }}
+          imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8000
+          envFrom:
+            - configMapRef:
+                name: {{ include "opspulse.componentName" $ctx }}
+          env:
+            - {{ toYaml $dbPassword | nindent 14 | trim }}
+          startupProbe:
+            httpGet: { path: /health, port: http }
+            periodSeconds: 2
+            failureThreshold: 30
+          livenessProbe:
+            httpGet: { path: /health, port: http }
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 3
+          readinessProbe:
+            httpGet: { path: /ready, port: http }
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 3
+          resources:
+            {{- toYaml .Values.backend.resources | nindent 12 }}
+          securityContext:
+            {{- include "opspulse.containerSecurityContext" . | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "opspulse.componentName" $ctx }}
+  labels:
+    {{- include "opspulse.labels" . | nindent 4 }}
+    app.kubernetes.io/component: backend
+spec:
+  type: ClusterIP
+  selector:
+    {{- include "opspulse.selectorLabels" $ctx | nindent 4 }}
+  ports:
+    - name: http
+      port: 8000
+      targetPort: http
+{{- if .Values.backend.autoscaling.enabled }}
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "opspulse.componentName" $ctx }}
+  labels:
+    {{- include "opspulse.labels" . | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "opspulse.componentName" $ctx }}
+  minReplicas: {{ .Values.backend.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.backend.autoscaling.maxReplicas }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.backend.autoscaling.targetCPUUtilizationPercentage }}
+{{- end }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "opspulse.componentName" $ctx }}
+  labels:
+    {{- include "opspulse.labels" . | nindent 4 }}
+spec:
+  minAvailable: {{ .Values.backend.podDisruptionBudget.minAvailable }}
+  selector:
+    matchLabels:
+      {{- include "opspulse.selectorLabels" $ctx | nindent 6 }}

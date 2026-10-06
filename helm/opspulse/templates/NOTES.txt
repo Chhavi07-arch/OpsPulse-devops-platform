@@ -1,0 +1,16 @@
+OpsPulse {{ .Chart.AppVersion }} is deployed as release "{{ .Release.Name }}" in namespace "{{ .Release.Namespace }}".
+
+Images:
+  backend  {{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}
+  frontend {{ .Values.frontend.image.repository }}:{{ .Values.frontend.image.tag }}
+
+Check the rollout:
+  kubectl get pods,svc,ingress,hpa -n {{ .Release.Namespace }}
+  helm test {{ .Release.Name }} -n {{ .Release.Namespace }}
+{{- if .Values.ingress.enabled }}
+
+Open the app:
+  http://{{ .Values.ingress.host }}          (dashboard)
+  http://{{ .Values.ingress.host }}/status   (public status page)
+  On minikube: run `minikube tunnel` and map {{ .Values.ingress.host }} to 127.0.0.1 in /etc/hosts.
+{{- end }}

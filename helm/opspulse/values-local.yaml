@@ -1,0 +1,14 @@
+# Local minikube: images are built straight into the cluster with `minikube image build`,
+# so they are never pulled from a registry.
+backend:
+  environment: local
+  image:
+    repository: opspulse-backend
+    tag: local
+    pullPolicy: Never
+
+frontend:
+  image:
+    repository: opspulse-frontend
+    tag: local
+    pullPolicy: Never

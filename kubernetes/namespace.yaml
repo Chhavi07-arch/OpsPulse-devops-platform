@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: opspulse
+  labels:
+    app.kubernetes.io/part-of: opspulse
+    # Enforce the Kubernetes "restricted" Pod Security Standard: non-root, no privilege escalation.
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: latest

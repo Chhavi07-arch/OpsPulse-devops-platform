@@ -1,0 +1,89 @@
+# Default values for OpsPulse. Environment-specific overrides live in values-*.yaml.
+
+nameOverride: ""
+fullnameOverride: ""
+
+imagePullSecrets: []
+
+backend:
+  image:
+    repository: ghcr.io/chhavi07-arch/opspulse-backend
+    # Set per release: the Git commit SHA built by CI (or "local" for images built on the laptop).
+    tag: ""
+    pullPolicy: IfNotPresent
+  replicaCount: 2
+  environment: production
+  logLevel: INFO
+  # Seeds realistic demo data into an empty database on first start.
+  seedDemoData: true
+  resources:
+    requests: { cpu: 100m, memory: 128Mi }
+    limits: { cpu: 500m, memory: 384Mi }
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 6
+    targetCPUUtilizationPercentage: 70
+  podDisruptionBudget:
+    minAvailable: 1
+
+frontend:
+  image:
+    repository: ghcr.io/chhavi07-arch/opspulse-frontend
+    tag: ""
+    pullPolicy: IfNotPresent
+  replicaCount: 2
+  resources:
+    requests: { cpu: 50m, memory: 32Mi }
+    limits: { cpu: 200m, memory: 128Mi }
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 4
+    targetCPUUtilizationPercentage: 70
+  podDisruptionBudget:
+    minAvailable: 1
+
+postgresql:
+  image:
+    repository: postgres
+    tag: 16-alpine
+    pullPolicy: IfNotPresent
+  auth:
+    database: opspulse
+    username: opspulse
+    # Either pass a password at install time (--set postgresql.auth.password=...) and the chart
+    # creates the Secret, or point existingSecret at a Secret you created yourself (GitOps).
+    password: ""
+    existingSecret: ""
+    secretKey: postgres-password
+  persistence:
+    size: 1Gi
+    storageClass: ""
+  resources:
+    requests: { cpu: 100m, memory: 128Mi }
+    limits: { cpu: 500m, memory: 512Mi }
+
+ingress:
+  enabled: true
+  className: nginx
+  host: opspulse.local
+  annotations: {}
+  tls: []
+  #  - secretName: opspulse-tls
+  #    hosts: [opspulse.local]
+
+networkPolicy:
+  # Only backend pods may connect to PostgreSQL.
+  enabled: true
+
+monitoring:
+  # These need the Prometheus Operator CRDs (kube-prometheus-stack); they are skipped if absent.
+  serviceMonitor:
+    enabled: true
+    interval: 15s
+  prometheusRule:
+    enabled: true
+  # ConfigMap picked up by the Grafana dashboard sidecar (configured to search all namespaces).
+  grafanaDashboard:
+    enabled: true

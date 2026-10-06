@@ -1,0 +1,11 @@
+apiVersion: v2
+name: opspulse
+description: OpsPulse incident management platform (React frontend, FastAPI backend, PostgreSQL)
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+icon: https://raw.githubusercontent.com/Chhavi07-arch/OpsPulse-devops-platform/main/application/frontend/public/favicon.svg
+keywords: [incident-management, status-page, fastapi, react]
+maintainers:
+  - name: Chhavi Ahlawat
+    url: https://github.com/Chhavi07-arch
