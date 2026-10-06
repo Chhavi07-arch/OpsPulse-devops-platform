@@ -1,0 +1,8 @@
+# Settings for `trivy config` (IaC scan). The Helm chart requires an image tag and a DB
+# password to render, so the scan supplies placeholders; nothing here is a real secret.
+misconfiguration:
+  helm:
+    set:
+      - backend.image.tag=scan
+      - frontend.image.tag=scan
+      - postgresql.auth.password=scan

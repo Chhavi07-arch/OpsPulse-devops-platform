@@ -1,0 +1,11 @@
+# Accepted risks for `trivy config`. Each entry needs a reason; review them regularly.
+
+# AWS-0040 — EKS public API endpoint (terraform-aws-modules/eks).
+# Needed so kubectl works from an admin laptop. Access is limited to
+# var.cluster_endpoint_public_access_cidrs, and a validation rule rejects 0.0.0.0/0.
+AWS-0040
+
+# AWS-0104 — EKS node security group allows all egress (terraform-aws-modules/eks).
+# Worker nodes in private subnets must reach container registries and AWS APIs through
+# the NAT gateway; inbound traffic stays restricted.
+AWS-0104
