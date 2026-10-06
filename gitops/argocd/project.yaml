@@ -1,0 +1,17 @@
+# Restricts what the OpsPulse application may deploy and where.
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: opspulse
+  namespace: argocd
+spec:
+  description: OpsPulse incident management platform
+  sourceRepos:
+    - https://github.com/Chhavi07-arch/OpsPulse-devops-platform.git
+  destinations:
+    - server: https://kubernetes.default.svc
+      namespace: opspulse
+  clusterResourceWhitelist: []
+  namespaceResourceWhitelist:
+    - group: "*"
+      kind: "*"

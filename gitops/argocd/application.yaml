@@ -1,0 +1,29 @@
+# Argo CD keeps the opspulse namespace in sync with Git: the chart comes from helm/opspulse
+# and the environment-specific values (image tags) from gitops/environments/production.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: opspulse
+  namespace: argocd
+spec:
+  project: opspulse
+  sources:
+    - repoURL: https://github.com/Chhavi07-arch/OpsPulse-devops-platform.git
+      targetRevision: main
+      path: helm/opspulse
+      helm:
+        releaseName: opspulse
+        valueFiles:
+          - $values/gitops/environments/production/values.yaml
+    - repoURL: https://github.com/Chhavi07-arch/OpsPulse-devops-platform.git
+      targetRevision: main
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: opspulse
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - ServerSideApply=true

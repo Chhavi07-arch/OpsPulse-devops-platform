@@ -1,0 +1,13 @@
+# Production values for Argo CD. The image tags are updated by the CI pipeline
+# (job "GitOps · promote to production") after the images pass every security gate.
+backend:
+  environment: production
+  image:
+    tag: ""
+frontend:
+  image:
+    tag: ""
+postgresql:
+  auth:
+    # Created once per cluster (see gitops/README.md); the password never lives in Git.
+    existingSecret: opspulse-db
