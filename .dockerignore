@@ -1,0 +1,16 @@
+# Images are built from the repository root; only application/ and docker/ are needed.
+*
+!application/backend/requirements.txt
+!application/backend/alembic.ini
+!application/backend/alembic/
+!application/backend/app/
+!application/frontend/package.json
+!application/frontend/package-lock.json
+!application/frontend/index.html
+!application/frontend/vite.config.js
+!application/frontend/public/
+!application/frontend/src/
+!docker/backend/entrypoint.sh
+!docker/frontend/nginx.conf.template
+**/__pycache__
+**/node_modules
