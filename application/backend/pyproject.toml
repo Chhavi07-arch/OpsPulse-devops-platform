@@ -1,0 +1,31 @@
+[project]
+name = "opspulse-api"
+version = "1.0.0"
+description = "OpsPulse incident management API"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+
+[tool.coverage.run]
+source = ["app"]
+omit = ["app/seed.py"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "S", "SIM"]
+ignore = ["B008"]  # FastAPI's Depends()/Query() defaults are idiomatic
+
+[tool.ruff.lint.isort]
+known-first-party = ["app"]
+known-third-party = ["alembic"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101"]  # asserts are how pytest works
+
+[tool.bandit]
+exclude_dirs = ["tests", "alembic"]
