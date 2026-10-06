@@ -17,7 +17,9 @@ RUN apk upgrade --no-cache
 USER 101
 
 # Where Nginx forwards /api requests; overridden per environment (Compose, Helm).
-ENV OPSPULSE_API_UPSTREAM=http://backend:8000
+# NGINX_ENTRYPOINT_LOCAL_RESOLVERS exposes the container's DNS servers to the config template.
+ENV OPSPULSE_API_UPSTREAM=http://backend:8000 \
+    NGINX_ENTRYPOINT_LOCAL_RESOLVERS=1
 
 COPY docker/frontend/nginx.conf.template /etc/nginx/templates/default.conf.template
 COPY --from=build /app/dist /usr/share/nginx/html

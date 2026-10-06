@@ -1,5 +1,10 @@
 # Rendered at container start by the image's envsubst step (only defined env vars are replaced).
 server {
+    # Resolve the API host per request (not once at startup), so Nginx starts even if DNS or the
+    # backend is not ready yet. NGINX_LOCAL_RESOLVERS is taken from /etc/resolv.conf by the image.
+    resolver ${NGINX_LOCAL_RESOLVERS} valid=10s ipv6=off;
+    set $api_upstream ${OPSPULSE_API_UPSTREAM};
+
     listen 8080;
     server_name _;
     root /usr/share/nginx/html;
@@ -19,7 +24,7 @@ server {
     }
 
     location /api/ {
-        proxy_pass ${OPSPULSE_API_UPSTREAM};
+        proxy_pass $api_upstream;
         proxy_set_header Host $host;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;

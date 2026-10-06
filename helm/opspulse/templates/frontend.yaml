@@ -38,7 +38,8 @@ spec:
               containerPort: 8080
           env:
             - name: OPSPULSE_API_UPSTREAM
-              value: "http://{{ include "opspulse.componentName" (dict "ctx" . "component" "backend") }}:8000"
+              # Fully qualified: Nginx's per-request resolver does not use the resolv.conf search domains.
+              value: "http://{{ include "opspulse.componentName" (dict "ctx" . "component" "backend") }}.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }}:8000"
           livenessProbe:
             httpGet: { path: /healthz, port: http }
             periodSeconds: 10

@@ -5,6 +5,9 @@ fullnameOverride: ""
 
 imagePullSecrets: []
 
+# DNS domain of the cluster (used to build fully qualified service names).
+clusterDomain: cluster.local
+
 backend:
   image:
     repository: ghcr.io/chhavi07-arch/opspulse-backend
