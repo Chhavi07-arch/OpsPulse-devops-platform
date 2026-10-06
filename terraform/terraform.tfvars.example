@@ -1,0 +1,10 @@
+# Copy to terraform.tfvars (gitignored) and fill in. Never put AWS keys here:
+# Terraform reads credentials from `aws configure` / environment variables.
+owner = "your-name"
+
+# Your public IP (curl -s https://checkip.amazonaws.com) followed by /32.
+cluster_endpoint_public_access_cidrs = ["203.0.113.10/32"]
+
+# region             = "us-east-2"
+# kubernetes_version = "1.35"
+# node_capacity_type = "SPOT"   # cheaper, may be interrupted
