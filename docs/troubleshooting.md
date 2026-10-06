@@ -27,7 +27,8 @@ NS=opspulse                      # used in the commands below
 ```
 
 **Symptom:** new backend pods never start; `kubectl get pods` shows `ErrImagePull`, then `ImagePullBackOff`
-(old pods keep serving because the rolling update cannot progress).
+(old pods keep serving because the rolling update cannot progress). With `values-local.yaml`
+(`pullPolicy: Never`) the same fault appears as `ErrImageNeverPull`: the image is not in the node's cache.
 
 **Investigate**
 
@@ -55,7 +56,8 @@ kubectl rollout status deployment/opspulse-backend -n $NS
 ./challenge.sh break 2
 ```
 
-**Symptom:** new pods stay in `Init:CrashLoopBackOff`; the rollout hangs.
+**Symptom:** new pods show `Init:Error`, then `Init:CrashLoopBackOff`; the rollout hangs while the old
+pods keep serving.
 
 **Investigate**
 
