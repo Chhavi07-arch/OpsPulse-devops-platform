@@ -1,0 +1,63 @@
+# Values for prometheus-community/kube-prometheus-stack (tested with chart 91.x).
+#   helm upgrade --install monitoring prometheus-community/kube-prometheus-stack \
+#     -n monitoring --create-namespace -f monitoring/kube-prometheus-stack-values.yaml
+# Sized for a laptop cluster (minikube with ~4 GB of memory).
+
+# Alerts are evaluated by Prometheus and visible on its Alerts page; Alertmanager (routing to
+# Slack/e-mail) is left out to save memory on a local cluster.
+alertmanager:
+  enabled: false
+
+# Control-plane components are not reachable for scraping on minikube; skip them to avoid
+# permanently firing "target down" alerts.
+kubeEtcd:
+  enabled: false
+kubeControllerManager:
+  enabled: false
+kubeScheduler:
+  enabled: false
+kubeProxy:
+  enabled: false
+
+prometheus:
+  prometheusSpec:
+    # Pick up ServiceMonitors / PrometheusRules from every namespace, including the
+    # ones shipped by the OpsPulse Helm chart, without requiring a release label.
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+    ruleSelectorNilUsesHelmValues: false
+    retention: 2d
+    resources:
+      requests: { cpu: 200m, memory: 400Mi }
+      limits: { memory: 1Gi }
+
+grafana:
+  # Empty = the chart generates a random admin password into a Secret (no default credentials).
+  adminPassword: ""
+  persistence:
+    enabled: false
+  sidecar:
+    dashboards:
+      enabled: true
+      label: grafana_dashboard
+      labelValue: "1"
+      # The OpsPulse dashboard ConfigMap lives in the application namespace.
+      searchNamespace: ALL
+  resources:
+    requests: { cpu: 50m, memory: 128Mi }
+    limits: { memory: 256Mi }
+
+prometheusOperator:
+  resources:
+    requests: { cpu: 50m, memory: 64Mi }
+    limits: { memory: 256Mi }
+
+kube-state-metrics:
+  resources:
+    requests: { cpu: 20m, memory: 32Mi }
+    limits: { memory: 128Mi }
+
+prometheus-node-exporter:
+  resources:
+    requests: { cpu: 20m, memory: 16Mi }
+    limits: { memory: 64Mi }
