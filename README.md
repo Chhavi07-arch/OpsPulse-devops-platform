@@ -218,6 +218,11 @@ helm list -n opspulse
 Open it through the Ingress: run `minikube tunnel` in another terminal, add `127.0.0.1 opspulse.local`
 to `/etc/hosts`, then browse to http://opspulse.local.
 
+**Full demo in GitHub Codespaces:** the whole platform (app, Argo CD, Prometheus, Grafana) needs about
+12 GB of memory. On a smaller laptop, open the repository in a Codespace (**Code → Codespaces → Create**,
+4-core machine) and run `.devcontainer/demo-up.sh`. It builds the cluster, lets Argo CD deploy OpsPulse
+from Git and forwards every UI to the **Ports** tab.
+
 ## Terraform: AWS VPC + EKS
 
 `terraform/` provisions a VPC with **two public and two private subnets** across two availability zones

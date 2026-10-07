@@ -1,4 +1,4 @@
-# Values for prometheus-community/kube-prometheus-stack (tested with chart 91.x).
+# Values for prometheus-community/kube-prometheus-stack (tested with chart 92.x).
 #   helm upgrade --install monitoring prometheus-community/kube-prometheus-stack \
 #     -n monitoring --create-namespace -f monitoring/kube-prometheus-stack-values.yaml
 # Sized for a laptop cluster (minikube with ~4 GB of memory).
@@ -44,8 +44,14 @@ grafana:
       # The OpsPulse dashboard ConfigMap lives in the application namespace.
       searchNamespace: ALL
   resources:
-    requests: { cpu: 50m, memory: 128Mi }
-    limits: { memory: 256Mi }
+    requests: { cpu: 100m, memory: 192Mi }
+    limits: { memory: 512Mi }
+  # Grafana can take a few minutes to start on a busy laptop; don't kill it while it initialises.
+  livenessProbe:
+    httpGet: { path: /api/health, port: 3000 }
+    initialDelaySeconds: 180
+    timeoutSeconds: 30
+    failureThreshold: 10
 
 prometheusOperator:
   resources:

@@ -1,0 +1,19 @@
+{
+  "name": "OpsPulse demo cluster",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu-24.04",
+  "hostRequirements": {
+    "cpus": 4,
+    "memory": "16gb"
+  },
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+    "ghcr.io/devcontainers/features/kubectl-helm-minikube:1": {}
+  },
+  "forwardPorts": [3000, 3001, 8443, 9090],
+  "portsAttributes": {
+    "3000": { "label": "OpsPulse", "onAutoForward": "notify" },
+    "3001": { "label": "Grafana", "onAutoForward": "notify" },
+    "8443": { "label": "Argo CD", "protocol": "https", "onAutoForward": "notify" },
+    "9090": { "label": "Prometheus", "onAutoForward": "notify" }
+  }
+}
