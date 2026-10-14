@@ -450,7 +450,7 @@ kubectl apply -f gitops/argocd/project.yaml -f gitops/argocd/application.yaml
 ```
 
 **Live demo:** change the UI → `git push` → the pipeline builds, scans and promotes the new SHA → Argo CD
-syncs → the sidebar shows the new commit.
+syncs → the application footer shows the new commit.
 
 ## Troubleshooting challenge
 
@@ -467,8 +467,15 @@ kubernetes/troubleshooting/challenge.sh fix 3
 
 ## Screenshots
 
-Screenshots are pending. They will be added under `docs/screenshots/` for the application, Kubernetes,
-CI/CD, Argo CD, Prometheus/Grafana, and the final AWS infrastructure demo.
+The orbital mission-control interface below was verified against the local API with isolated demo
+data, including incident declaration, resolution, search, service navigation and the public status page.
+
+![OpsPulse orbital overview](docs/screenshots/overview-desktop.png)
+
+[View the mobile layout](docs/screenshots/overview-mobile.png).
+
+Deployment evidence for Kubernetes, CI/CD, Argo CD, Prometheus/Grafana and the final AWS infrastructure
+demo is still pending. The application previews above do not represent an AWS deployment.
 
 ## Lessons learned
 
