@@ -3,10 +3,10 @@
 backend:
   environment: production
   image:
-    tag: "11f5fb6d4e12d0b7a4846a34444aab1bf278ea28"
+    tag: "3e0b402234321923fe35ac8b424ae3d89d091383"
 frontend:
   image:
-    tag: "11f5fb6d4e12d0b7a4846a34444aab1bf278ea28"
+    tag: "3e0b402234321923fe35ac8b424ae3d89d091383"
 postgresql:
   auth:
     # Created once per cluster (see gitops/README.md); the password never lives in Git.
