@@ -308,6 +308,25 @@ your current public IP/32 in `terraform/terraform.tfvars`. For the complete moni
 use the larger node settings in `terraform.tfvars.example`; two `t3.small` nodes have limited memory
 and pod capacity. Keep the local Terraform state until teardown is complete.
 
+Check the plan and credit balance before creating resources:
+
+```bash
+aws freetier get-account-plan-state --profile opspulse-login --region ap-southeast-2
+```
+
+For the new AWS experience, also open **AWS Settings → Billing** to confirm the remaining credits,
+their expiry and eligible services, and any spend limit. The API's `accountPlanRemainingCredits`
+field is the plan credit balance; do not assume it includes every promotional credit shown in
+AWS Settings. Resolve a discrepancy before relying on credits to cover the demo.
+
+An app-only demo can use two `t3.medium` workers with minimum, desired and maximum size all set
+to `2`. Sydney list prices checked on 2026-10-14 give a **$0.2696/hour base**: EKS standard support
+($0.10), two workers ($0.1056), one NAT gateway ($0.059), and its public IPv4 address ($0.005).
+This excludes EBS storage, KMS, CloudWatch logs, NAT data processing, data transfer, possible T3
+surplus CPU credits and taxes. These are usage estimates, not a spending cap. Rates came from
+the AWS Price List API and [EKS pricing](https://aws.amazon.com/eks/pricing/); recheck them before
+the demo. Keep monitoring and Argo CD in Codespaces for this smaller AWS configuration.
+
 After applying Terraform and running its `configure_kubectl` output, run from the repository root:
 
 ```bash

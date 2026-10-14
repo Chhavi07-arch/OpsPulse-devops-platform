@@ -56,7 +56,7 @@ module "eks" {
     metrics-server         = {}
     aws-ebs-csi-driver = {
       pod_identity_association = [{
-        role_arn        = aws_iam_role.ebs_csi.arn
+        role_arn        = data.aws_iam_role.ebs_csi_ready.arn
         service_account = "ebs-csi-controller-sa"
       }]
     }
@@ -71,6 +71,4 @@ module "eks" {
       desired_size   = var.node_desired_size
     }
   }
-
-  depends_on = [aws_iam_role_policy_attachment.ebs_csi]
 }
