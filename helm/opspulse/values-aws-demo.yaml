@@ -1,0 +1,12 @@
+# Layer after gitops/environments/production/values.yaml to retain CI image tags.
+backend:
+  environment: aws-demo
+
+postgresql:
+  persistence:
+    storageClass: opspulse-gp3
+
+# Access through kubectl port-forward for this short, private demo. A public URL
+# needs an ingress controller/load balancer, DNS and authentication separately.
+ingress:
+  enabled: false

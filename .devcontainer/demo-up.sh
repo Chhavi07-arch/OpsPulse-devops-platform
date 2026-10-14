@@ -11,6 +11,8 @@ step "Kubernetes cluster (minikube)"
 if ! minikube status >/dev/null 2>&1; then
   minikube start --cpus=4 --memory=12g
 fi
+minikube update-context
+kubectl config use-context minikube >/dev/null
 minikube addons enable ingress
 minikube addons enable metrics-server
 
@@ -34,27 +36,18 @@ kubectl wait --for=condition=Available deployment --all -n argocd --timeout=10m
 
 step "OpsPulse, deployed by Argo CD from Git"
 kubectl apply -f gitops/argocd/project.yaml -f gitops/argocd/application.yaml
-until [ "$(kubectl get application opspulse -n argocd -o jsonpath='{.status.sync.status}/{.status.health.status}' 2>/dev/null)" = "Synced/Healthy" ]; do
-  echo "  waiting for Argo CD to sync ($(kubectl get application opspulse -n argocd -o jsonpath='{.status.sync.status}/{.status.health.status}' 2>/dev/null))"
+deadline=$((SECONDS + 600))
+until [ "$(kubectl get application opspulse -n argocd --request-timeout=15s -o jsonpath='{.status.sync.status}/{.status.health.status}' 2>/dev/null)" = "Synced/Healthy" ]; do
+  if (( SECONDS >= deadline )); then
+    echo "Argo CD did not reach Synced/Healthy within 10 minutes. Inspect these results:" >&2
+    kubectl get application opspulse -n argocd -o yaml --request-timeout=15s >&2 || true
+    kubectl get pods -n opspulse --request-timeout=15s >&2 || true
+    exit 1
+  fi
+  echo "  waiting for Argo CD to sync ($(kubectl get application opspulse -n argocd --request-timeout=15s -o jsonpath='{.status.sync.status}/{.status.health.status}' 2>/dev/null))"
   sleep 10
 done
 kubectl get pods,svc,ingress,hpa,pvc -n opspulse
 
-step "Forwarding the UIs (logs in /tmp/port-forward-*.log)"
-forward() { # namespace service local:remote
-  pkill -f "port-forward -n $1 svc/$2" 2>/dev/null || true
-  nohup kubectl port-forward -n "$1" "svc/$2" "$3" >"/tmp/port-forward-$2.log" 2>&1 &
-}
-forward opspulse opspulse-frontend 3000:8080
-forward monitoring monitoring-grafana 3001:80
-forward argocd argocd-server 8443:443
-forward monitoring monitoring-kube-prometheus-prometheus 9090:9090
-
-cat <<EOF
-
-OpsPulse is running. Open the forwarded ports from the PORTS tab:
-  3000  OpsPulse dashboard (and /status for the public status page)
-  3001  Grafana     user: admin   password: $(kubectl get secret -n monitoring monitoring-grafana -o jsonpath='{.data.admin-password}' | base64 -d)
-  8443  Argo CD     user: admin   password: $(kubectl get secret -n argocd argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d)
-  9090  Prometheus
-EOF
+step "Checking and forwarding the UIs"
+exec bash .devcontainer/demo-forward.sh

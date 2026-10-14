@@ -39,16 +39,27 @@ module "eks" {
   subnet_ids = module.vpc.private_subnets
 
   endpoint_public_access       = true
+  endpoint_private_access      = true
   endpoint_public_access_cidrs = var.cluster_endpoint_public_access_cidrs
 
   # The identity running Terraform becomes a cluster admin, so kubectl works right after apply.
   enable_cluster_creator_admin_permissions = true
 
   addons = {
-    coredns                = {}
-    kube-proxy             = {}
-    vpc-cni                = { before_compute = true }
+    coredns    = {}
+    kube-proxy = {}
+    vpc-cni = {
+      before_compute       = true
+      configuration_values = jsonencode({ enableNetworkPolicy = "true" })
+    }
     eks-pod-identity-agent = { before_compute = true }
+    metrics-server         = {}
+    aws-ebs-csi-driver = {
+      pod_identity_association = [{
+        role_arn        = aws_iam_role.ebs_csi.arn
+        service_account = "ebs-csi-controller-sa"
+      }]
+    }
   }
 
   eks_managed_node_groups = {
@@ -60,4 +71,6 @@ module "eks" {
       desired_size   = var.node_desired_size
     }
   }
+
+  depends_on = [aws_iam_role_policy_attachment.ebs_csi]
 }

@@ -5,6 +5,14 @@ owner = "your-name"
 # Your public IP (curl -s https://checkip.amazonaws.com) followed by /32.
 cluster_endpoint_public_access_cidrs = ["203.0.113.10/32"]
 
-# region             = "us-east-2"
+# For AWS Projects, use the assigned region in Settings > Projects > Additional info.
+# region             = "ap-southeast-2"
 # kubernetes_version = "1.35"
 # node_capacity_type = "SPOT"   # cheaper, may be interrupted
+
+# For the complete demo including monitoring and Argo CD, allow memory and pod
+# capacity for all three stacks. The default t3.small is for infrastructure/app only.
+# node_instance_types = ["t3.large"]
+# node_min_size       = 2
+# node_desired_size   = 2
+# node_max_size       = 2

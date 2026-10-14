@@ -223,6 +223,17 @@ to `/etc/hosts`, then browse to http://opspulse.local.
 4-core machine) and run `.devcontainer/demo-up.sh`. It builds the cluster, lets Argo CD deploy OpsPulse
 from Git and forwards every UI to the **Ports** tab.
 
+After resuming an existing Codespace, the Ports tab can retain links even when the processes behind
+them have stopped. Check `minikube status`; if the existing cluster is stopped, run `minikube start`.
+Then run `bash .devcontainer/demo-forward.sh` and leave that terminal open. It checks the application
+deployments, restores the four UI forwards, verifies HTTP responses and reports a failed forward.
+Port 8443 uses HTTPS; the other three ports use HTTP inside the Codespace. The generated external
+Codespaces URLs still use HTTPS. Run the full setup script only when the stack needs installation.
+
+The Codespaces setup completed on 7 October 2026: Argo CD reported **Synced/Healthy**, all five
+application pods were Ready with zero restarts, both HPAs reported CPU metrics, and the PostgreSQL
+1 Gi PVC was Bound. Screenshots and verification of live monitoring data are still pending.
+
 ## Terraform: AWS VPC + EKS
 
 `terraform/` provisions a VPC with **two public and two private subnets** across two availability zones
@@ -240,8 +251,102 @@ $(terraform output -raw configure_kubectl)       # point kubectl at EKS
 terraform destroy                                # always, after the demo
 ```
 
-Credentials come from `aws configure`; `terraform.tfvars` and state files are gitignored.
-**Cost:** about $0.19/hour while running (EKS control plane, two `t3.small` nodes, NAT gateway).
+Credentials come from the AWS CLI profile; `terraform.tfvars` and state files are gitignored.
+**Demo cost:** EKS standard support costs $0.10 per cluster-hour; worker instances, NAT gateway,
+public IPv4, EBS and data transfer are additional. Check the selected region and instance sizes in the
+[AWS Pricing Calculator](https://calculator.aws/) before applying; $0.19/hour is not an all-inclusive
+budget. Check credit eligibility and expiry in **Billing → Credits**. Credits offset eligible charges;
+they do not stop running resources when the demo ends. See [EKS pricing](https://aws.amazon.com/eks/pricing/).
+
+### Short AWS application demo
+
+Keep development and the GitOps walkthrough in Codespaces; create AWS resources only for the demo.
+
+For an AWS **Projects** account, first open **Settings → Projects → Additional info** and check the
+project's assigned region. Use that region for login and Terraform (for example, Sydney is
+`ap-southeast-2`). The region shown in a billing page URL is not the workload region. Console home
+also provides **Connect your AI-coding agent to AWS → Copy agent prompt** for project-specific setup.
+See [AWS project connection instructions](https://docs.aws.amazon.com/accounts/latest/reference/connect-ai-coding-tool.html).
+
+Run these in the same terminal on the machine that will run Terraform; replace the region if your
+project uses another one. Finish the browser sign-in and wait for login to succeed before continuing:
+
+```bash
+aws configure set region ap-southeast-2 --profile opspulse-login
+aws login --profile opspulse-login --region ap-southeast-2
+aws sts get-caller-identity --profile opspulse-login
+```
+
+If the browser shows a sign-in error, start a fresh login and choose the same identity and project
+used in AWS Settings. Cancelling the command does not establish credentials. Do not continue while
+the identity check fails. For Terraform clients that do not consume the login cache directly, use
+the AWS CLI credential process bridge after successful login:
+
+```bash
+aws configure set credential_process 'aws configure export-credentials --profile opspulse-login --format process' --profile opspulse-demo
+aws configure set region ap-southeast-2 --profile opspulse-demo
+export AWS_PROFILE=opspulse-demo
+aws sts get-caller-identity
+```
+
+These commands configure profiles under `~/.aws/`, outside this repository. Do not copy credentials
+into source files, Terraform variables or GitHub. Renew expired sessions with `aws login --profile
+opspulse-login --region ap-southeast-2`. See [AWS CLI sign-in](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-sign-in.html).
+
+Terraform also installs metrics-server (for HPAs), enables VPC CNI NetworkPolicy enforcement and
+installs the EBS CSI driver with a dedicated Pod Identity role. The driver provisions PostgreSQL's
+encrypted gp3 volume. See [AWS EBS CSI setup](https://docs.aws.amazon.com/eks/latest/userguide/ebs-csi.html).
+
+Before `terraform plan`, confirm `aws sts get-caller-identity` succeeds. Set `region`, `owner` and
+your current public IP/32 in `terraform/terraform.tfvars`. For the complete monitoring/GitOps stack,
+use the larger node settings in `terraform.tfvars.example`; two `t3.small` nodes have limited memory
+and pod capacity. Keep the local Terraform state until teardown is complete.
+
+After applying Terraform and running its `configure_kubectl` output, run from the repository root:
+
+```bash
+kubectl config current-context                       # confirm this is the demo EKS cluster
+kubectl get nodes
+kubectl apply -f kubernetes/namespace.yaml -f kubernetes/aws/storageclass.yaml
+# Run once on the new cluster. Never replace this password while retaining its database volume.
+kubectl create secret generic opspulse-db -n opspulse \
+  --from-literal=postgres-password="$(openssl rand -hex 16)"
+
+helm upgrade --install opspulse helm/opspulse -n opspulse \
+  -f gitops/environments/production/values.yaml \
+  -f helm/opspulse/values-aws-demo.yaml --wait --timeout 10m
+helm test opspulse -n opspulse --logs
+kubectl get pods,svc,hpa,pvc -n opspulse
+kubectl port-forward -n opspulse svc/opspulse-frontend 3000:8080
+```
+
+While the forward runs, open **http://localhost:3000** and **http://localhost:3000/status**.
+The workload runs on AWS; the browser reaches it through the authenticated Kubernetes connection.
+This demo override disables Ingress, so it does not create a public website or a load balancer.
+Ingress evidence comes from the Codespaces deployment. The app has no authentication, so public
+hosting needs access control before exposing its write API. API docs are available with a separate
+`kubectl port-forward -n opspulse svc/opspulse-backend 8000:8000` at http://localhost:8000/docs.
+
+This AWS path uses Helm directly. Argo CD continues to own the Codespaces app; do not point it at
+the same AWS release without explicitly transferring ownership and adding the AWS values override.
+For AWS monitoring, install the monitoring chart as described below, then rerun the app's Helm upgrade.
+
+After recording the demo, remove the workload and its **disposable demo database** before destroying
+the cluster, so the EBS driver can delete its volume:
+
+```bash
+kubectl config current-context                       # confirm the demo EKS cluster again
+kubectl get pv                                      # record the demo volume ID
+helm uninstall opspulse -n opspulse --wait
+kubectl delete pvc data-opspulse-postgres-0 -n opspulse
+kubectl get pv                                      # wait for that PV to disappear
+terraform -chdir=terraform plan -destroy
+terraform -chdir=terraform destroy
+terraform -chdir=terraform state list                # should be empty after successful destroy
+```
+
+Verify the demo EBS volume is deleted in EC2, and confirm no demo load balancers, NAT gateways,
+Elastic IPs or instances remain. EBS volumes created by Kubernetes are outside Terraform's state.
 
 ## CI/CD pipeline
 
@@ -333,6 +438,10 @@ environment-specific values (image tags) live in `gitops/environments/production
 pipeline updates after the images pass every gate. Argo CD watches the repository and reconciles the
 cluster; `selfHeal` reverts manual changes and `prune` removes resources deleted from Git.
 
+The Application enables `ServerSideDiff=true` so Argo CD compares the live resources with the state
+predicted by Kubernetes. This resolved a repeated `OutOfSync/Healthy` condition on the PostgreSQL
+StatefulSet during the Codespaces demo, even though each sync operation succeeded.
+
 ```bash
 kubectl apply -f kubernetes/namespace.yaml
 kubectl create secret generic opspulse-db -n opspulse \
@@ -358,7 +467,8 @@ kubernetes/troubleshooting/challenge.sh fix 3
 
 ## Screenshots
 
-Screenshots of every stage are in [`docs/screenshots`](docs/screenshots).
+Screenshots are pending. They will be added under `docs/screenshots/` for the application, Kubernetes,
+CI/CD, Argo CD, Prometheus/Grafana, and the final AWS infrastructure demo.
 
 ## Lessons learned
 
