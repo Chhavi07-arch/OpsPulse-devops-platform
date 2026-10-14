@@ -33,6 +33,21 @@ def overlap_seconds(incident: Incident, start: datetime, end: datetime) -> float
     return max(0.0, (min(inc_end, end) - max(inc_start, start)).total_seconds())
 
 
+def outage_seconds(incidents: list[Incident], start: datetime, end: datetime) -> float:
+    """Count the union of outage intervals so concurrent incidents count once."""
+    intervals = sorted(
+        (max(as_utc(i.started_at), start), min(as_utc(i.resolved_at) if i.resolved_at else end, end))
+        for i in incidents
+        if IMPACT_BY_SEVERITY[Severity(i.severity)] in OUTAGE_STATUSES
+    )
+    total = 0.0
+    counted_until = start
+    for interval_start, interval_end in intervals:
+        total += max(0.0, (interval_end - max(interval_start, counted_until)).total_seconds())
+        counted_until = max(counted_until, interval_end)
+    return total
+
+
 @router.get("/stats", response_model=Stats)
 def stats(db: Session = Depends(get_db), days: int = Query(default=14, ge=7, le=90)):
     now = utcnow()
@@ -97,11 +112,7 @@ def status_page(db: Session = Depends(get_db), days: int = Query(default=30, ge=
                 IMPACT_BY_SEVERITY[Severity(i.severity)] for i in incidents if overlap_seconds(i, start, end) > 0
             ]
             history.append(UptimeDay(day=start.date(), status=worst_status(impacts)))
-        outage = sum(
-            overlap_seconds(i, window, now)
-            for i in incidents
-            if IMPACT_BY_SEVERITY[Severity(i.severity)] in OUTAGE_STATUSES
-        )
+        outage = outage_seconds(incidents, window, now)
         uptime = 100 * (1 - outage / (now - window).total_seconds())
         page_services.append(
             StatusPageService(

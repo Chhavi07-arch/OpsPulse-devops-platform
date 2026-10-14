@@ -1,3 +1,11 @@
+from datetime import UTC, datetime, timedelta
+
+from sqlalchemy.orm import Session
+
+from app.db import get_engine
+from app.models import Incident
+
+
 def test_stats_counts_active_incidents_and_services(client, incident):
     stats = client.get("/api/stats").json()
     assert stats["active_incidents"] == 1
@@ -37,3 +45,47 @@ def test_status_page_all_operational_without_incidents(client, service):
     page = client.get("/api/status").json()
     assert page["overall"] == "OPERATIONAL"
     assert page["services"][0]["uptime_percent"] == 100.0
+
+
+def test_status_uptime_counts_overlapping_outages_once(client, service, monkeypatch):
+    now = datetime(2026, 10, 14, 12, tzinfo=UTC)
+    monkeypatch.setattr("app.routers.insights.utcnow", lambda: now)
+    # The first incident crosses the window boundary; the second overlaps it
+    # and the third is contained within it. A minor degradation is not downtime.
+    with Session(get_engine()) as db:
+        for start_days, end_days, severity in [(8, 2, "SEV1"), (4, 1, "SEV2"), (3, 2, "SEV1"), (1, 0, "SEV3")]:
+            db.add(
+                Incident(
+                    title="Concurrent outage",
+                    service_id=service["id"],
+                    commander="On-call",
+                    severity=severity,
+                    status="RESOLVED",
+                    started_at=now - timedelta(days=start_days),
+                    resolved_at=now - timedelta(days=end_days),
+                )
+            )
+        db.commit()
+    response = client.get("/api/status", params={"days": 7})
+    assert response.status_code == 200
+    # The window is 6.5 days; its final day has no outage.
+    assert response.json()["services"][0]["uptime_percent"] == round(100 / 6.5, 2)
+
+
+def test_status_uptime_never_negative_for_concurrent_open_outages(client, service, monkeypatch):
+    now = datetime(2026, 10, 14, 12, tzinfo=UTC)
+    monkeypatch.setattr("app.routers.insights.utcnow", lambda: now)
+    with Session(get_engine()) as db:
+        for _ in range(2):
+            db.add(
+                Incident(
+                    title="Ongoing outage",
+                    service_id=service["id"],
+                    commander="On-call",
+                    severity="SEV1",
+                    status="INVESTIGATING",
+                    started_at=now - timedelta(days=10),
+                )
+            )
+        db.commit()
+    assert client.get("/api/status", params={"days": 7}).json()["services"][0]["uptime_percent"] == 0
