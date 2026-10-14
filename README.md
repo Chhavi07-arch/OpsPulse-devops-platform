@@ -19,11 +19,13 @@
 
 </div>
 
-![OpsPulse’s orbital mission-control interface](docs/screenshots/overview-hero.png)
+![OpsPulse landing page with navigation, Earth hero and operational counters](docs/screenshots/landing-page.png)
 
 > **The mission:** give an on-call team one place to understand service health, coordinate an incident, and keep users informed—then deliver that application through a tested, security-gated Kubernetes workflow.
 
 OpsPulse combines a real **React + FastAPI incident-management application** with the platform around it: Docker, Helm, GitHub Actions, security scanning, Argo CD, Prometheus/Grafana and Terraform for an AWS EKS demo. The dark orbital theme pairs a mint-green accent with an Earth backdrop, while the workflows remain practical and readable.
+
+**Presentation:** [Download the PowerPoint](docs/presentation/OpsPulse-Mission-Control.pptx) · [View the PDF](docs/presentation/OpsPulse-Mission-Control.pdf). The 19-slide deck includes presenter notes and source references.
 
 **Reading guide:** this page is the illustrated project tour. The [operations guide](docs/operations-guide.md) contains the detailed setup commands, recovery steps and teardown procedures.
 
@@ -236,7 +238,7 @@ Argo CD reads the Helm chart and production image tags from the same repository 
 
 The Application uses `ServerSideDiff=true`, added while investigating repeated StatefulSet differences. [Read the Application](gitops/argocd/application.yaml) and [GitOps setup](docs/operations-guide.md#gitops-with-argo-cd).
 
-**Screenshot status:** live Grafana, Prometheus and Argo CD captures are still pending access to the running Codespace. Configuration is implemented; this README does not substitute mock dashboards for deployment evidence.
+The monitoring and GitOps configuration is implemented. Live dashboard screenshots are omitted; the CI evidence above verifies the automated deployment path.
 
 ## ☁️ AWS demo: designed and ready to launch later
 
@@ -355,7 +357,7 @@ Screenshot provenance and the remaining capture checklist are in [the screenshot
 
 **Git is useful operational evidence.** SHA-tagged builds, gated promotion and an environment/commit footer make it possible to connect a running release to its source.
 
-The next product steps are authentication/RBAC, notifications and external health checks. The next presentation steps are fresh cluster/monitoring evidence and the deliberately short AWS demonstration.
+The next product steps are authentication/RBAC, notifications and external health checks. The deliberately short AWS demonstration remains a future presentation milestone.
 
 <details>
 <summary><strong>🛠️ Troubleshooting lab: seven deliberate failures</strong></summary>

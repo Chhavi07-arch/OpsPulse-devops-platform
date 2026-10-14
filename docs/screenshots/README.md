@@ -6,6 +6,7 @@ Captured on **14 October 2026** from the running OpsPulse application and GitHub
 
 | Image | Source / what it demonstrates |
 |---|---|
+| [Landing page](landing-page.png) | Wider 1800-pixel capture with navigation, full hero and overview counters |
 | [Hero](overview-hero.png) | Overview’s Earth artwork and live counts from the local API |
 | [Desktop overview](overview-desktop.png) | Complete overview page |
 | [Operational dashboard](operations-dashboard.png) | KPIs, trend chart, severity, service health and activity |
@@ -24,15 +25,6 @@ Captured on **14 October 2026** from the running OpsPulse application and GitHub
 
 These are captures of real pages, not generated mock-ups. Demo incident text is fictional seed/test content. No screenshot here claims a currently running AWS deployment.
 
-## Remaining live deployment captures
+## Evidence scope
 
-The local minikube profiles were stopped during this documentation pass. The running Codespace’s authenticated Kubernetes/monitoring interfaces were not accessible from this session. Capture these from the existing Codespace when it is available:
-
-1. **Argo CD, port 8443:** OpsPulse Application with both `Synced` and `Healthy`, plus its resource tree.
-2. **Grafana, port 3001:** “OpsPulse — Service Overview” with a recent time range and populated graphs.
-3. **Prometheus, port 9090:** targets page showing the OpsPulse backend targets `UP`.
-4. **Codespace terminal:** `kubectl get pods,svc,hpa,pvc -n opspulse`, showing readiness, CPU metrics and a Bound PVC.
-
-Run `bash .devcontainer/demo-forward.sh` from the repository in the existing Codespace, then use its **Ports** tab. For a missing context, follow the [recovery instructions](../operations-guide.md#kubernetes-and-helm); do not create another cluster just to obtain screenshots.
-
-After the intentionally deferred AWS demo, capture the EKS cluster/nodes, running app through the AWS context, and teardown verification. Hide passwords, tokens, login callback URLs and personal billing details before adding images to Git.
+Live Argo CD, Grafana, Prometheus and terminal captures are omitted at the author's request. The application/API screenshots and real CI summary are the presentation's visual evidence. No cluster was created or started for screenshots. AWS remains deferred; these images do not show an AWS deployment.
