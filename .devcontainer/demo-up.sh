@@ -50,4 +50,4 @@ done
 kubectl get pods,svc,ingress,hpa,pvc -n opspulse
 
 step "Checking and forwarding the UIs"
-exec bash .devcontainer/demo-forward.sh
+OPSPULSE_KUBE_CONTEXT=minikube exec bash .devcontainer/demo-forward.sh

@@ -224,9 +224,15 @@ to `/etc/hosts`, then browse to http://opspulse.local.
 from Git and forwards every UI to the **Ports** tab.
 
 After resuming an existing Codespace, the Ports tab can retain links even when the processes behind
-them have stopped. Check `minikube status`; if the existing cluster is stopped, run `minikube start`.
+them have stopped. First check `kubectl config get-contexts` to identify the existing cluster.
+For minikube, check `minikube profile list` and `minikube status`; resume an existing stopped profile
+with `minikube -p PROFILE_NAME start`, or repair its connection with `minikube -p PROFILE_NAME update-context`.
+For an existing kind cluster whose context is missing, use `kind get clusters`, then
+`kind export kubeconfig --name CLUSTER_NAME`. Do not create a second cluster to repair a missing context.
 Then run `bash .devcontainer/demo-forward.sh` and leave that terminal open. It checks the application
 deployments, restores the four UI forwards, verifies HTTP responses and reports a failed forward.
+It uses the current Kubernetes context, or `OPSPULSE_KUBE_CONTEXT` when explicitly set. If there is no
+current context, it can restore a running default minikube profile; otherwise it prints recovery steps.
 Port 8443 uses HTTPS; the other three ports use HTTP inside the Codespace. The generated external
 Codespaces URLs still use HTTPS. Run the full setup script only when the stack needs installation.
 

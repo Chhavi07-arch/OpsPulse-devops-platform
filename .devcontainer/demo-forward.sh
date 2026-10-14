@@ -3,7 +3,40 @@
 # Leave this terminal running. Ctrl+C stops only the forwards started here.
 set -euo pipefail
 
-CONTEXT="${OPSPULSE_KUBE_CONTEXT:-minikube}"
+CONTEXT="${OPSPULSE_KUBE_CONTEXT:-}"
+context_exists() {
+  [[ -n "$1" ]] && kubectl config get-contexts "$1" -o name | grep -Fxq -- "$1"
+}
+if [[ -z "$CONTEXT" ]]; then
+  CONTEXT="$(kubectl config current-context 2>/dev/null || true)"
+  # A resumed minikube may have lost its kubeconfig entry. Recover only a
+  # running existing profile; never create a new cluster as part of forwarding.
+  if { [[ -z "$CONTEXT" ]] || [[ "$CONTEXT" == "minikube" ]]; } && ! context_exists "$CONTEXT" && command -v minikube >/dev/null 2>&1; then
+    host_status="$(minikube -p minikube status --format '{{.Host}}' 2>/dev/null || true)"
+    if [[ "$host_status" == "Running" ]]; then
+      minikube -p minikube update-context
+      CONTEXT=minikube
+    fi
+  fi
+fi
+
+if ! context_exists "$CONTEXT"; then
+  cat >&2 <<'EOF'
+No usable Kubernetes context was found. No cluster has been created or reset.
+Run these in the Codespaces terminal to identify the existing cluster:
+  kubectl config get-contexts
+  minikube profile list
+  docker ps --format '{{.Names}}'
+For a running minikube profile, restore its connection with:
+  minikube -p PROFILE_NAME update-context
+For an existing kind cluster, restore its connection with:
+  kind export kubeconfig --name CLUSTER_NAME
+Then retry this script. To select an existing context explicitly:
+  OPSPULSE_KUBE_CONTEXT=CONTEXT_NAME bash .devcontainer/demo-forward.sh
+EOF
+  exit 1
+fi
+printf 'Using Kubernetes context: %s\n' "$CONTEXT"
 LOG_DIR="$(mktemp -d "${TMPDIR:-/tmp}/opspulse-forward.XXXXXX")"
 pids=()
 
@@ -19,6 +52,11 @@ trap 'exit 130' INT
 trap 'exit 143' TERM
 
 kubectl --context "$CONTEXT" get nodes --request-timeout=15s >/dev/null
+if ! kubectl --context "$CONTEXT" -n opspulse get service opspulse-frontend --request-timeout=15s >/dev/null; then
+  printf 'OpsPulse was not found in context %s. Select the context of your existing demo cluster.\n' "$CONTEXT" >&2
+  kubectl config get-contexts >&2
+  exit 1
+fi
 kubectl --context "$CONTEXT" -n opspulse rollout status deployment/opspulse-frontend --timeout=120s
 kubectl --context "$CONTEXT" -n opspulse rollout status deployment/opspulse-backend --timeout=120s
 
