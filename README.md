@@ -1,523 +1,377 @@
 <div align="center">
 
-# OpsPulse
+# 🪐 OpsPulse
 
-**Incident management and public status page, shipped through a complete DevOps platform.**
+### Mission control for incidents. A complete journey from commit to cluster.
+
+**Observe. Respond. Stay ahead.**
 
 [![CI/CD](https://github.com/Chhavi07-arch/OpsPulse-devops-platform/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/Chhavi07-arch/OpsPulse-devops-platform/actions/workflows/ci-cd.yml)
-![Python](https://img.shields.io/badge/FastAPI-Python_3.12-009688)
-![React](https://img.shields.io/badge/React-19-61dafb)
-![Kubernetes](https://img.shields.io/badge/Kubernetes-Helm-326ce5)
-![Terraform](https://img.shields.io/badge/Terraform-AWS_EKS-7b42bc)
-![License](https://img.shields.io/badge/license-MIT-green)
+![FastAPI](https://img.shields.io/badge/FastAPI-Python_3.12-72e6bd?style=flat-square&labelColor=101a22)
+![React](https://img.shields.io/badge/React-19-72e6bd?style=flat-square&labelColor=101a22)
+![Kubernetes](https://img.shields.io/badge/Kubernetes-Helm-72e6bd?style=flat-square&labelColor=101a22)
+![GitOps](https://img.shields.io/badge/GitOps-Argo_CD-72e6bd?style=flat-square&labelColor=101a22)
+![License](https://img.shields.io/badge/License-MIT-72e6bd?style=flat-square&labelColor=101a22)
+
+[Explore the app](#-a-tour-of-mission-control) · [Run it](#-launch-locally) · [Architecture](#-how-the-platform-fits-together) · [Verified results](#-evidence-and-project-status)
+
+**Chhavi Ahlawat · 24BCS10201 · Session 21 — Final DevOps Project**
 
 </div>
 
-OpsPulse is what an on-call team uses when production breaks: declare an incident, move it through
-**Investigating → Identified → Monitoring → Resolved** with a timestamped timeline, see which services
-are degraded, track MTTR, and keep customers informed through a public status page with 30-day uptime bars.
+![OpsPulse’s orbital mission-control interface](docs/screenshots/overview-hero.png)
 
-The application is the vehicle; the project is the **path from a commit to a monitored Kubernetes
-deployment**: tests, security gates, signed-off images, Helm, Terraform-provisioned AWS infrastructure,
-Prometheus/Grafana and GitOps with Argo CD.
+> **The mission:** give an on-call team one place to understand service health, coordinate an incident, and keep users informed—then deliver that application through a tested, security-gated Kubernetes workflow.
 
-> Student: **Chhavi Ahlawat** · Enrollment **24BCS10201** · Session 21 — Final DevOps Project
+OpsPulse combines a real **React + FastAPI incident-management application** with the platform around it: Docker, Helm, GitHub Actions, security scanning, Argo CD, Prometheus/Grafana and Terraform for an AWS EKS demo. The dark orbital theme pairs a mint-green accent with an Earth backdrop, while the workflows remain practical and readable.
 
----
+**Reading guide:** this page is the illustrated project tour. The [operations guide](docs/operations-guide.md) contains the detailed setup commands, recovery steps and teardown procedures.
 
-## Contents
+## ✨ At a glance
 
-1. [Architecture](#architecture)
-2. [Technologies](#technologies)
-3. [Repository layout](#repository-layout)
-4. [Application](#application)
-5. [Run locally with Docker Compose](#run-locally-with-docker-compose)
-6. [Kubernetes and Helm](#kubernetes-and-helm)
-7. [Terraform: AWS VPC + EKS](#terraform-aws-vpc--eks)
-8. [CI/CD pipeline](#cicd-pipeline)
-9. [DevSecOps](#devsecops)
-10. [Monitoring and logs](#monitoring-and-logs)
-11. [GitOps with Argo CD](#gitops-with-argo-cd)
-12. [Troubleshooting challenge](#troubleshooting-challenge)
-13. [Screenshots](#screenshots)
-14. [Lessons learned](#lessons-learned)
+| Product | Delivery platform | Verified evidence |
+|---|---|---|
+| Incident lifecycle and response timeline | Multi-stage, non-root Docker images | **30 backend tests passed** |
+| Service catalogue and health summaries | Helm deployment and in-cluster smoke tests | **97% backend coverage** |
+| Public status page and uptime history | Parallel SAST, SCA, secrets and IaC gates | **10 CI jobs passed** |
+| Responsive desktop/mobile, dark/light themes | SHA-tagged images and Argo CD GitOps | Successful CI deployment to **kind** |
+| MTTR, severity mix and incident trends | Prometheus metrics, Grafana dashboard and alerts | AWS Terraform **plan verified; not deployed** |
 
----
+Numbers above come from [CI run 38599535048](https://github.com/Chhavi07-arch/OpsPulse-devops-platform/actions/runs/38599535048), for commit `fa87670`, on 14 October 2026. Coverage describes the backend test suite, not the frontend or infrastructure.
 
-## Architecture
+<details>
+<summary><strong>🧭 Navigate this README</strong></summary>
+
+- [A tour of mission control](#-a-tour-of-mission-control)
+- [How the platform fits together](#-how-the-platform-fits-together)
+- [From a commit to a deployment](#-from-a-commit-to-a-deployment)
+- [Security at every layer](#-security-at-every-layer)
+- [Kubernetes, storage and resilience](#-kubernetes-storage-and-resilience)
+- [Observability and GitOps](#-observability-and-gitops)
+- [AWS demo design](#-aws-demo-designed-and-ready-to-launch-later)
+- [Launch locally](#-launch-locally)
+- [API and data model](#-api-and-data-model)
+- [Repository map](#-repository-map)
+- [Evidence and project status](#-evidence-and-project-status)
+- [Lessons and next steps](#-lessons-and-next-steps)
+
+</details>
+
+## 🌍 A tour of mission control
+
+The screenshots below are captured from the running local application with an isolated **SQLite demo database**. They show real UI/API behaviour with seeded example incidents; they are not evidence of a live AWS deployment. Container and Kubernetes deployments use **PostgreSQL**.
+
+### 01 · See the state of operations
+
+The overview brings together active incidents, mean time to resolve, operational services, the last 14 days of incident activity, and the current severity mix. Service health is **derived from incident records**; OpsPulse does not independently probe the external services represented in the demo.
+
+![Operational KPIs, incident trend and severity breakdown](docs/screenshots/operations-dashboard.png)
+
+### 02 · Declare an incident with context
+
+Choose the affected service, assign severity from **SEV1 to SEV4**, name an incident commander and describe the impact. The declaration becomes the first entry in the incident timeline.
+
+<p align="center"><img src="docs/screenshots/declare-incident.png" alt="The incident declaration form with service, severity and commander fields" width="720"></p>
+
+### 03 · Keep the response moving
+
+**Investigating → Identified → Monitoring → Resolved** gives the response a clear progression. Each update records its message, author and timestamp. Teams can change severity, add notes, resolve an incident or reopen it when necessary.
+
+![Incident detail with status progression and a timestamped response timeline](docs/screenshots/incident-detail.png)
+
+### 04 · Find the incidents that matter
+
+Search by text and filter by lifecycle status, severity or service. The incident table puts ownership, impact and elapsed time beside each record.
+
+![Incident list with search and filters](docs/screenshots/incidents.png)
+
+### 05 · Know what you operate
+
+The service catalogue records each service’s team, criticality and description. Health and active-incident counts connect the catalogue to the response workflow. A service with incident history cannot simply be deleted, preserving those relationships.
+
+![Service catalogue showing ownership, criticality and incident-derived health](docs/screenshots/services.png)
+
+### 06 · Keep users informed
+
+The public status page presents current impact, response updates, recent resolutions and **30-day uptime history**. Uptime calculations merge overlapping outage intervals so the same downtime is not counted twice.
+
+![Public status page with current incidents and service history](docs/screenshots/public-status.png)
+
+<details>
+<summary><strong>🔎 A closer look at the uptime history</strong></summary>
+
+![Thirty-day uptime history for the six example services](docs/screenshots/uptime-history.png)
+
+These percentages are calculated from recorded incidents. The seeded numbers illustrate the feature; they are not measurements of production availability.
+
+</details>
+
+### 07 · A little polish goes a long way
+
+The interface supports light and dark modes, a responsive navigation layout, loading and error states, keyboard-accessible controls, and a footer that identifies the running environment and commit.
+
+<table>
+<tr>
+<td width="75%" align="center"><strong>Light mode</strong><br><img src="docs/screenshots/services-light.png" alt="OpsPulse service catalogue in light mode"></td>
+<td width="25%" align="center"><strong>Mobile mission control</strong><br><img src="docs/screenshots/overview-mobile.png" alt="Responsive mobile overview" width="280"></td>
+</tr>
+</table>
+
+[Open the complete desktop overview →](docs/screenshots/overview-desktop.png)
+
+## 🛰️ How the platform fits together
+
+There are two related paths: **serving the application** and **delivering changes safely**.
 
 ```mermaid
 flowchart LR
-    dev([Developer]) -->|git push| gh[(GitHub)]
-
-    subgraph ci [GitHub Actions]
-        direction TB
-        test[Lint + pytest<br/>Frontend build]
-        sec[SAST · SCA · Secrets · IaC]
-        img[Docker build<br/>Trivy scan + gate]
-        kind[Helm install on kind<br/>+ helm test]
-        promote[Promote image tag<br/>to gitops/]
-        test --> img
-        sec --> img
-        img --> kind --> promote
-    end
-
-    gh --> ci
-    img -->|push :sha| ghcr[(GHCR)]
-    promote -->|commit| gh
-
-    subgraph k8s [Kubernetes · minikube or AWS EKS]
-        argo[Argo CD] -->|sync Helm chart| ns
-        subgraph ns [namespace opspulse]
-            ing[Ingress] -->|/| fe[Frontend<br/>React + Nginx]
-            ing -->|/api| be[Backend<br/>FastAPI · HPA]
-            fe -->|/api| be
-            be --> db[(PostgreSQL<br/>StatefulSet + PVC)]
-        end
-        prom[Prometheus] -->|ServiceMonitor /metrics| be
-        graf[Grafana] --> prom
-    end
-
-    gh -.->|watches| argo
-    ghcr -.->|pull| ns
-    tf[Terraform] -->|VPC + EKS| k8s
-    user([Users]) --> ing
+    U[Browser] --> I[NGINX Ingress]
+    I -->|/| F[React + Nginx]
+    I -->|/api| B[FastAPI replicas]
+    F -->|/api proxy| B
+    B --> P[(PostgreSQL + PVC)]
+    M[Prometheus] -->|scrapes /metrics| B
+    G[Grafana] --> M
+    A[Argo CD] -->|reconciles Helm release| F
+    A --> B
+    A --> P
+    R[(GitHub repository)] -.->|desired state| A
 ```
 
-**Request path:** browser → Ingress (`/` to the frontend, `/api` to the backend) → FastAPI → PostgreSQL.
-**Delivery path:** commit → CI gates → image `:<commit-sha>` in GHCR → CI updates `gitops/` → Argo CD syncs the cluster.
+**Application path:** browser → Ingress/frontend proxy → FastAPI → PostgreSQL. The API exposes separate liveness and database-aware readiness endpoints.
 
-## Technologies
+**Platform path:** GitHub Actions validates the code and images, tests a Helm installation in a temporary kind cluster, then updates the GitOps image tags. Argo CD reconciles those tags in the development cluster.
 
-| Area | Tools |
-|---|---|
-| Frontend | React 19, Vite, React Router, Recharts, Lucide icons, served by unprivileged Nginx |
-| Backend | FastAPI, SQLAlchemy 2, Alembic, Pydantic Settings, Uvicorn, prometheus-fastapi-instrumentator |
-| Database | PostgreSQL 16 |
-| Testing and quality | pytest (+coverage, in-memory SQLite), Ruff, ESLint |
-| Containers | Docker multi-stage builds, non-root images, Docker Compose |
-| CI/CD | GitHub Actions, GitHub Container Registry, kind |
-| DevSecOps | Bandit, Semgrep, pip-audit, npm audit, Gitleaks, Trivy (image + IaC), GitHub code scanning |
-| Kubernetes | Helm 3, Deployments, StatefulSet, Services, Ingress (NGINX), HPA, PDB, NetworkPolicy, Pod Security Standards |
-| Infrastructure | Terraform, AWS VPC, EKS managed node groups |
-| Observability | Prometheus, Grafana, PrometheusRule alerts, JSON structured logs |
-| GitOps | Argo CD (AppProject + multi-source Application, auto-sync, self-heal) |
+**AWS path:** the short demo will use Terraform-provisioned EKS and a direct Helm release. It uses private port-forward access rather than a public Ingress. Argo CD remains part of the Codespaces walkthrough.
 
-## Repository layout
-
-```text
-.
-├── application/
-│   ├── backend/          FastAPI service, Alembic migrations, pytest suite
-│   └── frontend/         React single-page app
-├── docker/               Dockerfiles, Nginx template, docker-compose.yml
-├── kubernetes/           namespace (Pod Security "restricted") + troubleshooting challenge
-├── helm/opspulse/        Helm chart: backend, frontend, postgres, ingress, HPA, monitoring
-├── terraform/            AWS VPC + EKS
-├── .github/workflows/    CI/CD + DevSecOps pipeline
-├── security/             IaC scan config, accepted-risk register, local scan script
-├── monitoring/           kube-prometheus-stack values (Prometheus + Grafana)
-├── gitops/               Argo CD project/application + per-environment values
-└── docs/                 troubleshooting walkthrough and screenshots
-```
-
-## Application
-
-**Features:** service catalogue with live health derived from open incidents · incident declaration with
-severity (SEV1–SEV4) · audited status timeline · MTTR and 14-day trend · public status page with 30-day
-uptime history · dark/light themes · build info (environment + commit SHA) in the sidebar.
-
-**API** (interactive docs at `/docs`):
-
-| Method | Path | Purpose |
+| Layer | Technology | Why it is here |
 |---|---|---|
-| GET | `/health` · `/ready` | Liveness · readiness (checks the database) |
-| GET | `/metrics` | Prometheus metrics |
-| GET | `/api/meta` | Version, environment, Git SHA |
-| GET · POST | `/api/services` | List · create services |
-| GET · PUT · DELETE | `/api/services/{id}` | Read · update · delete (blocked if it has incident history) |
-| GET · POST | `/api/incidents` | List (filters: status, severity, service, active, search) · declare |
-| GET · PUT · DELETE | `/api/incidents/{id}` | Detail with timeline · edit · delete |
-| POST | `/api/incidents/{id}/updates` | Post a timeline update / change status |
-| GET | `/api/stats` | KPIs, MTTR, trend |
-| GET | `/api/status` | Public status page data |
+| Web interface | React 19, Vite, React Router, Recharts, Lucide | Responsive application screens, routing and operational charts |
+| API | FastAPI, Pydantic, SQLAlchemy 2 | Validated requests, structured endpoints and relational persistence |
+| Database | PostgreSQL 16, Alembic | Durable incident history and repeatable schema migrations |
+| Containers | Docker, Docker Compose, Nginx | Reproducible builds and a simple local startup path |
+| Orchestration | Kubernetes, Helm | Declarative deployment, health checks, scaling and storage |
+| Delivery | GitHub Actions, GHCR, Argo CD | Tested images and Git-tracked release promotion |
+| Observability | Prometheus, Grafana, JSON logs | Request metrics, business metrics, dashboards and investigation |
+| Infrastructure | Terraform, AWS VPC, EKS | Reproducible infrastructure for the short cloud demo |
 
-**Configuration** is read only from `OPSPULSE_*` environment variables (`application/backend/app/config.py`);
-nothing environment-specific is hardcoded. The database password always comes from a secret.
+## 🚀 From a commit to a deployment
 
-**Tests:** 28 pytest cases across every endpoint, run against an isolated in-memory SQLite database.
+```mermaid
+flowchart LR
+    C[Push / pull request] --> T[Backend tests + frontend build]
+    C --> S[SAST · SCA · secrets · IaC]
+    T --> B[Build two images]
+    S --> B
+    B --> V[Trivy image gates]
+    V --> K[kind + Helm + smoke test]
+    K --> P[Promote commit SHA on main]
+    P --> A[Argo CD sync]
+```
+
+![Successful GitHub Actions run for the verified Terraform fix](docs/screenshots/ci-pipeline.png)
+
+[Inspect the actual CI run and logs →](https://github.com/Chhavi07-arch/OpsPulse-devops-platform/actions/runs/38599535048)
+
+The pipeline has **10 jobs**, including separate backend/frontend image jobs. Images use the full **Git commit SHA**, so a release points to a specific build rather than a moving `latest` tag. Pull requests run validation but do not publish images or promote a release.
+
+| Gate | What it verifies |
+|---|---|
+| Backend | Ruff lint/format and pytest with coverage |
+| Frontend | ESLint and a production Vite build |
+| Source security | Bandit and Semgrep |
+| Dependencies | pip-audit and npm audit |
+| Secrets | Gitleaks across Git history |
+| Infrastructure | Trivy configuration scanning |
+| Images | Successful builds and no fixable HIGH/CRITICAL findings |
+| Deployment | A real Helm installation in kind and in-cluster endpoint checks |
+| Promotion | Updating the GitOps values only after the previous gates pass |
+
+> **What the deployment test proves:** the chart can start its workloads and pass the smoke test in CI’s temporary kind cluster. It does not prove that the separate Codespace or AWS environment is currently running.
+
+## 🛡️ Security at every layer
+
+Build-time checks and runtime controls address different failure modes.
+
+- **Before release:** scan source, dependencies, secrets, Kubernetes/Terraform configuration and both container images.
+- **Inside containers:** run as non-root, drop Linux capabilities, use read-only root filesystems and `RuntimeDefault` seccomp.
+- **Inside Kubernetes:** enforce restricted Pod Security and restrict PostgreSQL ingress to backend pods with NetworkPolicy.
+- **For configuration:** keep credentials out of source control; use environment variables and a Kubernetes Secret.
+- **For infrastructure:** restrict EKS API access to explicitly configured CIDRs; encrypt the demo database’s gp3 volume.
+
+The [accepted-risk register](security/.trivyignore) records two EKS IaC exceptions. A passing scan is a result for a particular commit and vulnerability database—not a claim that software has no security risks. Image gates block fixable HIGH/CRITICAL findings; unfixed findings remain visible.
+
+**Current boundary:** the app has no sign-in or role-based access control. Keep write APIs private for the demo. Author names in timelines are user-entered, not verified identities.
+
+## ☸️ Kubernetes, storage and resilience
+
+The Helm chart packages the application and its operational controls together.
+
+| Resource | Behaviour |
+|---|---|
+| Deployments | Frontend and backend start with two replicas each |
+| Startup/liveness/readiness probes | Separate process health from database availability |
+| Init containers | Wait for PostgreSQL, then apply Alembic migrations |
+| Migration locking | PostgreSQL advisory lock prevents concurrent migration races |
+| StatefulSet + PVC | PostgreSQL stores data on a persistent volume |
+| HPA | CPU target 70%; backend 2–6 replicas and frontend 2–4 |
+| PodDisruptionBudget | Retain at least one frontend/backend replica during voluntary disruption |
+| Helm test | Verify `/ready` and `/api/services` from inside the cluster |
+
+[Chart templates](helm/opspulse/templates/) · [Default values](helm/opspulse/values.yaml) · [Kubernetes setup guide](docs/operations-guide.md#kubernetes-and-helm)
+
+## 📡 Observability and GitOps
+
+### Understand the system with Prometheus and Grafana
+
+The API exposes request metrics and business metrics such as active incidents, declarations, resolutions and resolution duration. The chart includes a **ServiceMonitor**, **PrometheusRule alerts** and a provisioned **Grafana dashboard** when the Prometheus Operator is present.
+
+The dashboard covers request rate, errors, p50/p95/p99 latency, HTTP status codes, active incidents by severity, and pod resources. Alerts cover an unavailable backend, elevated errors, high latency and an open SEV1 incident. JSON logs attach a request ID, route, status code and duration to each request.
+
+[Monitoring configuration](monitoring/kube-prometheus-stack-values.yaml) · [Installation and access](docs/operations-guide.md#monitoring-and-logs)
+
+### Keep desired state in Git with Argo CD
+
+Argo CD reads the Helm chart and production image tags from the same repository through a multi-source Application. Auto-sync applies changes, self-heal reconciles drift, and prune removes resources deleted from Git.
+
+The Application uses `ServerSideDiff=true`, added while investigating repeated StatefulSet differences. [Read the Application](gitops/argocd/application.yaml) and [GitOps setup](docs/operations-guide.md#gitops-with-argo-cd).
+
+**Screenshot status:** live Grafana, Prometheus and Argo CD captures are still pending access to the running Codespace. Configuration is implemented; this README does not substitute mock dashboards for deployment evidence.
+
+## ☁️ AWS demo: designed and ready to launch later
+
+Terraform defines a VPC with two public and two private subnets across two availability zones, one NAT gateway, an EKS cluster, managed workers and the required add-ons. EBS CSI uses a dedicated Pod Identity role to provision encrypted database storage.
+
+| Item | Demo plan |
+|---|---|
+| Existing project | Hello World |
+| Workload Region | Sydney · `ap-southeast-2` |
+| Kubernetes | EKS 1.35, verified in standard support |
+| Workers | Two `t3.medium` instances, fixed node count of two |
+| Browser access | Authenticated `kubectl port-forward` to localhost |
+| Infrastructure state | Plan validated: **60 create, 0 change, 0 destroy** |
+| Deployment state | **Not launched**; reserved for the presentation/demo session |
+| Cost approach | Brief session, then workload and infrastructure teardown |
+
+The compute/network base estimate is **$0.2696/hour**, excluding disks, KMS, logs, data processing/transfer, possible surplus CPU credits and taxes. Pricing was checked on 14 October 2026; the [operations guide](docs/operations-guide.md#short-aws-application-demo) has the breakdown and teardown sequence. It is an estimate, not an automatic spending cap.
+
+AWS screenshots will be added after the actual demo. The infrastructure plan and local app screenshots should not be mistaken for a running AWS deployment.
+
+## 🧑‍🚀 Launch locally
+
+With Docker and Docker Compose installed:
+
+```bash
+git clone https://github.com/Chhavi07-arch/OpsPulse-devops-platform.git
+cd OpsPulse-devops-platform/docker
+cp .env.example .env
+# Edit .env and set a strong POSTGRES_PASSWORD.
+docker compose up --build
+```
+
+| Open | What you will see |
+|---|---|
+| [localhost:3000](http://localhost:3000) | Mission-control overview |
+| [localhost:3000/incidents](http://localhost:3000/incidents) | Incident list |
+| [localhost:3000/services](http://localhost:3000/services) | Service catalogue |
+| [localhost:3000/status](http://localhost:3000/status) | Public status page |
+| [localhost:8000/docs](http://localhost:8000/docs) | Interactive API documentation |
+| [localhost:8000/metrics](http://localhost:8000/metrics) | Prometheus metrics |
+
+For the complete platform on a machine with sufficient memory, follow the [Codespaces/minikube instructions](docs/operations-guide.md#kubernetes-and-helm). After resuming a configured Codespace, run `bash .devcontainer/demo-forward.sh` and keep that terminal open. A forwarded port alone does not mean the service behind it is running.
+
+<details>
+<summary><strong>🧪 Run the backend tests yourself</strong></summary>
 
 ```bash
 cd application/backend
-python -m venv .venv && source .venv/bin/activate
+python -m venv .venv
+source .venv/bin/activate
 pip install -r requirements-dev.txt
 pytest -v --cov=app
 ```
 
-## Run locally with Docker Compose
+Tests use isolated SQLite data and cover service CRUD, incident lifecycle, validation, health endpoints, statistics and uptime edge cases. CI also runs frontend lint/build and the Kubernetes smoke test.
 
-```bash
-cd docker
-cp .env.example .env                      # then set POSTGRES_PASSWORD (openssl rand -hex 16)
-docker compose up --build
-```
+</details>
 
-| URL | What |
+## 🔌 API and data model
+
+![FastAPI interactive documentation from the running local API](docs/screenshots/api-docs.png)
+
+| Endpoint | Purpose |
 |---|---|
-| http://localhost:3000 | OpsPulse dashboard |
-| http://localhost:3000/status | Public status page |
-| http://localhost:8000/docs | API documentation |
-| http://localhost:8000/metrics | Prometheus metrics |
+| `GET /health` · `GET /ready` | Liveness and database-aware readiness |
+| `GET /metrics` | Prometheus metrics |
+| `GET /api/meta` | Version, environment and build SHA |
+| `/api/services` · `/api/services/{id}` | List/create and read/update/delete services |
+| `/api/incidents` · `/api/incidents/{id}` | Filter/create and read/update/delete incidents |
+| `POST /api/incidents/{id}/updates` | Add a timeline entry and update incident status |
+| `GET /api/stats` | Overview KPIs and trends |
+| `GET /api/status` | Public service health and uptime history |
 
-Both images run as non-root users (backend uid `10001`, frontend uid `101`), install OS security
-updates at build time and define health checks. The frontend image is a multi-stage build
-(Node build → Nginx runtime); Nginx proxies `/api` to the backend address given in `OPSPULSE_API_UPSTREAM`.
+The data model has three core entities: **Service → Incident → IncidentUpdate**. A service can have many incidents; an incident can have many timeline entries. Validation belongs in the API as well as the interface.
 
-## Kubernetes and Helm
+## 🗂️ Repository map
 
-The chart in `helm/opspulse` deploys:
-
-| Object | Details |
-|---|---|
-| Deployments | backend and frontend, ≥2 replicas, hardened security contexts, read-only root filesystems |
-| Init containers | `wait-for-db`, then `migrate` (Alembic, protected by a Postgres advisory lock) |
-| Probes | startup + liveness on `/health`, readiness on `/ready` (database check) |
-| Services | ClusterIP for backend (8000) and frontend (8080), headless for Postgres |
-| Ingress | `opspulse.local`: `/api` → backend, `/` → frontend |
-| ConfigMap / Secret | non-secret settings / database password (or an existing Secret) |
-| StatefulSet + PVC | PostgreSQL with a 1 Gi volume claim |
-| HPA | backend 2–6 and frontend 2–4 replicas at 70% CPU |
-| PodDisruptionBudget | keeps at least one replica of each during node maintenance |
-| NetworkPolicy | only backend pods may reach PostgreSQL |
-| ServiceMonitor, PrometheusRule, dashboard ConfigMap | rendered when the Prometheus Operator is installed |
-| Helm test | calls `/ready` and `/api/services` from inside the cluster |
-
-**Deploy to minikube:**
-
-```bash
-minikube start --memory=3800 --cpus=4
-minikube addons enable ingress
-minikube addons enable metrics-server
-
-# build the images on the laptop and load them into the cluster
-docker build -t opspulse-backend:local  --build-arg GIT_SHA=$(git rev-parse HEAD) -f docker/backend/Dockerfile .
-docker build -t opspulse-frontend:local -f docker/frontend/Dockerfile .
-minikube image load opspulse-backend:local
-minikube image load opspulse-frontend:local
-
-kubectl apply -f kubernetes/namespace.yaml
-helm upgrade --install opspulse helm/opspulse -n opspulse \
-  -f helm/opspulse/values-local.yaml \
-  --set postgresql.auth.password="$(openssl rand -hex 16)" --wait
-helm test opspulse -n opspulse
-
-kubectl get pods,svc,ingress,hpa,pvc -n opspulse
-helm list -n opspulse
+```text
+application/
+  backend/               FastAPI, models, migrations and tests
+  frontend/              React pages, reusable components and orbital theme
+docker/                  Dockerfiles, Nginx and Compose
+helm/opspulse/           Workloads, probes, HPA, storage and monitoring templates
+kubernetes/              Namespace, AWS StorageClass and troubleshooting exercises
+terraform/               VPC, EKS, managed workers and storage permissions
+.github/workflows/       CI/CD and security gates
+gitops/                  Argo CD Application, AppProject and production image tags
+monitoring/              Prometheus/Grafana installation values
+security/                Scan configuration and documented exceptions
+docs/                    Operations guide, troubleshooting and screenshots
 ```
 
-Open it through the Ingress: run `minikube tunnel` in another terminal, add `127.0.0.1 opspulse.local`
-to `/etc/hosts`, then browse to http://opspulse.local.
+## 📸 Evidence and project status
 
-**Full demo in GitHub Codespaces:** the whole platform (app, Argo CD, Prometheus, Grafana) needs about
-12 GB of memory. On a smaller laptop, open the repository in a Codespace (**Code → Codespaces → Create**,
-4-core machine) and run `.devcontainer/demo-up.sh`. It builds the cluster, lets Argo CD deploy OpsPulse
-from Git and forwards every UI to the **Ports** tab.
+| Area | Implemented / verified | Remaining evidence or work |
+|---|---|---|
+| Application | Local UI/API walkthrough and screenshots | User authentication and permissions |
+| Backend tests | 30 passing, 97% coverage in cited CI run | Extend coverage as features grow |
+| Delivery | All 10 CI jobs passed; kind install and Helm smoke test passed | Capture the next end-to-end live GitOps change |
+| Kubernetes | Chart, scaling, probes, persistence and network policies | Fresh screenshots from the resumed development cluster |
+| GitOps | Argo CD manifests and SHA promotion | Current Synced/Healthy screen |
+| Observability | Metrics, dashboard and alert configuration | Live Grafana graphs and Prometheus targets |
+| AWS | Authentication, regional preflight and Terraform plan verified | Provision, demonstrate, record evidence, then destroy |
 
-After resuming an existing Codespace, the Ports tab can retain links even when the processes behind
-them have stopped. First check `kubectl config get-contexts` to identify the existing cluster.
-For minikube, check `minikube profile list` and `minikube status`; resume an existing stopped profile
-with `minikube -p PROFILE_NAME start`, or repair its connection with `minikube -p PROFILE_NAME update-context`.
-For an existing kind cluster whose context is missing, use `kind get clusters`, then
-`kind export kubeconfig --name CLUSTER_NAME`. Do not create a second cluster to repair a missing context.
-Then run `bash .devcontainer/demo-forward.sh` and leave that terminal open. It checks the application
-deployments, restores the four UI forwards, verifies HTTP responses and reports a failed forward.
-It uses the current Kubernetes context, or `OPSPULSE_KUBE_CONTEXT` when explicitly set. If there is no
-current context, it can restore a running default minikube profile; otherwise it prints recovery steps.
-Port 8443 uses HTTPS; the other three ports use HTTP inside the Codespace. The generated external
-Codespaces URLs still use HTTPS. Run the full setup script only when the stack needs installation.
+Screenshot provenance and the remaining capture checklist are in [the screenshot index](docs/screenshots/README.md). No personal AWS billing details, credentials or access tokens are included in the public evidence.
 
-The Codespaces setup completed on 7 October 2026: Argo CD reported **Synced/Healthy**, all five
-application pods were Ready with zero restarts, both HPAs reported CPU metrics, and the PostgreSQL
-1 Gi PVC was Bound. Screenshots and verification of live monitoring data are still pending.
+## 🌱 Lessons and next steps
 
-## Terraform: AWS VPC + EKS
+**Readiness is different from liveness.** A running process may still be unable to reach its database. Separate probes let Kubernetes route traffic correctly.
 
-`terraform/` provisions a VPC with **two public and two private subnets** across two availability zones
-(single NAT gateway), and an **EKS cluster** with a managed node group in the private subnets. The
-Kubernetes API is reachable only from the CIDRs in `cluster_endpoint_public_access_cidrs`; a validation
-rule rejects `0.0.0.0/0`. All resources carry `Project`, `Owner` and `ManagedBy` tags.
+**Concurrent replicas need coordinated migrations.** An advisory lock protects the schema when init containers start together.
 
-```bash
-cd terraform
-cp terraform.tfvars.example terraform.tfvars    # set owner and your IP/32
-terraform init
-terraform plan
-terraform apply                                  # ~15 minutes
-$(terraform output -raw configure_kubectl)       # point kubectl at EKS
-terraform destroy                                # always, after the demo
-```
+**Small infrastructure dependencies can stop a whole plan.** A module-wide EBS-policy dependency deferred identity lookups and broke Terraform resource counts. Narrowing the dependency to the storage add-on produced a successful full plan.
 
-Credentials come from the AWS CLI profile; `terraform.tfvars` and state files are gitignored.
-**Demo cost:** EKS standard support costs $0.10 per cluster-hour; worker instances, NAT gateway,
-public IPv4, EBS and data transfer are additional. Check the selected region and instance sizes in the
-[AWS Pricing Calculator](https://calculator.aws/) before applying; $0.19/hour is not an all-inclusive
-budget. Check credit eligibility and expiry in **Billing → Credits**. Credits offset eligible charges;
-they do not stop running resources when the demo ends. See [EKS pricing](https://aws.amazon.com/eks/pricing/).
+**Outage arithmetic matters.** Merging overlapping intervals avoids double-counting downtime; regression tests preserve that behaviour.
 
-### Short AWS application demo
+**Git is useful operational evidence.** SHA-tagged builds, gated promotion and an environment/commit footer make it possible to connect a running release to its source.
 
-Keep development and the GitOps walkthrough in Codespaces; create AWS resources only for the demo.
+The next product steps are authentication/RBAC, notifications and external health checks. The next presentation steps are fresh cluster/monitoring evidence and the deliberately short AWS demonstration.
 
-For an AWS **Projects** account, first open **Settings → Projects → Additional info** and check the
-project's assigned region. Use that region for login and Terraform (for example, Sydney is
-`ap-southeast-2`). The region shown in a billing page URL is not the workload region. Console home
-also provides **Connect your AI-coding agent to AWS → Copy agent prompt** for project-specific setup.
-See [AWS project connection instructions](https://docs.aws.amazon.com/accounts/latest/reference/connect-ai-coding-tool.html).
+<details>
+<summary><strong>🛠️ Troubleshooting lab: seven deliberate failures</strong></summary>
 
-Run these in the same terminal on the machine that will run Terraform; replace the region if your
-project uses another one. Finish the browser sign-in and wait for login to succeed before continuing:
+The [challenge script](kubernetes/troubleshooting/challenge.sh) can introduce an invalid image tag, wrong database password, Service selector typo, broken readiness probe, insufficient memory, unschedulable CPU request or incorrect Ingress backend.
 
-```bash
-aws configure set region ap-southeast-2 --profile opspulse-login
-aws login --profile opspulse-login --region ap-southeast-2
-aws sts get-caller-identity --profile opspulse-login
-```
+Follow [the troubleshooting walkthrough](docs/troubleshooting.md) for symptoms, investigation, root cause, fix and verification. Run these exercises only in the disposable development environment.
 
-If the browser shows a sign-in error, start a fresh login and choose the same identity and project
-used in AWS Settings. Cancelling the command does not establish credentials. Do not continue while
-the identity check fails. For Terraform clients that do not consume the login cache directly, use
-the AWS CLI credential process bridge after successful login:
+</details>
 
-```bash
-aws configure set credential_process 'aws configure export-credentials --profile opspulse-login --format process' --profile opspulse-demo
-aws configure set region ap-southeast-2 --profile opspulse-demo
-export AWS_PROFILE=opspulse-demo
-aws sts get-caller-identity
-```
+---
 
-These commands configure profiles under `~/.aws/`, outside this repository. Do not copy credentials
-into source files, Terraform variables or GitHub. Renew expired sessions with `aws login --profile
-opspulse-login --region ap-southeast-2`. See [AWS CLI sign-in](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-sign-in.html).
+<div align="center">
 
-Terraform also installs metrics-server (for HPAs), enables VPC CNI NetworkPolicy enforcement and
-installs the EBS CSI driver with a dedicated Pod Identity role. The driver provisions PostgreSQL's
-encrypted gp3 volume. See [AWS EBS CSI setup](https://docs.aws.amazon.com/eks/latest/userguide/ebs-csi.html).
+**Built by Chhavi Ahlawat** · [GitHub](https://github.com/Chhavi07-arch) · [MIT License](LICENSE)
 
-Before `terraform plan`, confirm `aws sts get-caller-identity` succeeds. Set `region`, `owner` and
-your current public IP/32 in `terraform/terraform.tfvars`. For the complete monitoring/GitOps stack,
-use the larger node settings in `terraform.tfvars.example`; two `t3.small` nodes have limited memory
-and pod capacity. Keep the local Terraform state until teardown is complete.
+*One platform. Total perspective.* 🪐
 
-Check the plan and credit balance before creating resources:
-
-```bash
-aws freetier get-account-plan-state --profile opspulse-login --region ap-southeast-2
-```
-
-For the new AWS experience, also open **AWS Settings → Billing** to confirm the remaining credits,
-their expiry and eligible services, and any spend limit. The API's `accountPlanRemainingCredits`
-field is the plan credit balance; do not assume it includes every promotional credit shown in
-AWS Settings. Resolve a discrepancy before relying on credits to cover the demo.
-
-An app-only demo can use two `t3.medium` workers with minimum, desired and maximum size all set
-to `2`. Sydney list prices checked on 2026-10-14 give a **$0.2696/hour base**: EKS standard support
-($0.10), two workers ($0.1056), one NAT gateway ($0.059), and its public IPv4 address ($0.005).
-This excludes EBS storage, KMS, CloudWatch logs, NAT data processing, data transfer, possible T3
-surplus CPU credits and taxes. These are usage estimates, not a spending cap. Rates came from
-the AWS Price List API and [EKS pricing](https://aws.amazon.com/eks/pricing/); recheck them before
-the demo. Keep monitoring and Argo CD in Codespaces for this smaller AWS configuration.
-
-After applying Terraform and running its `configure_kubectl` output, run from the repository root:
-
-```bash
-kubectl config current-context                       # confirm this is the demo EKS cluster
-kubectl get nodes
-kubectl apply -f kubernetes/namespace.yaml -f kubernetes/aws/storageclass.yaml
-# Run once on the new cluster. Never replace this password while retaining its database volume.
-kubectl create secret generic opspulse-db -n opspulse \
-  --from-literal=postgres-password="$(openssl rand -hex 16)"
-
-helm upgrade --install opspulse helm/opspulse -n opspulse \
-  -f gitops/environments/production/values.yaml \
-  -f helm/opspulse/values-aws-demo.yaml --wait --timeout 10m
-helm test opspulse -n opspulse --logs
-kubectl get pods,svc,hpa,pvc -n opspulse
-kubectl port-forward -n opspulse svc/opspulse-frontend 3000:8080
-```
-
-While the forward runs, open **http://localhost:3000** and **http://localhost:3000/status**.
-The workload runs on AWS; the browser reaches it through the authenticated Kubernetes connection.
-This demo override disables Ingress, so it does not create a public website or a load balancer.
-Ingress evidence comes from the Codespaces deployment. The app has no authentication, so public
-hosting needs access control before exposing its write API. API docs are available with a separate
-`kubectl port-forward -n opspulse svc/opspulse-backend 8000:8000` at http://localhost:8000/docs.
-
-This AWS path uses Helm directly. Argo CD continues to own the Codespaces app; do not point it at
-the same AWS release without explicitly transferring ownership and adding the AWS values override.
-For AWS monitoring, install the monitoring chart as described below, then rerun the app's Helm upgrade.
-
-After recording the demo, remove the workload and its **disposable demo database** before destroying
-the cluster, so the EBS driver can delete its volume:
-
-```bash
-kubectl config current-context                       # confirm the demo EKS cluster again
-kubectl get pv                                      # record the demo volume ID
-helm uninstall opspulse -n opspulse --wait
-kubectl delete pvc data-opspulse-postgres-0 -n opspulse
-kubectl get pv                                      # wait for that PV to disappear
-terraform -chdir=terraform plan -destroy
-terraform -chdir=terraform destroy
-terraform -chdir=terraform state list                # should be empty after successful destroy
-```
-
-Verify the demo EBS volume is deleted in EC2, and confirm no demo load balancers, NAT gateways,
-Elastic IPs or instances remain. EBS volumes created by Kubernetes are outside Terraform's state.
-
-## CI/CD pipeline
-
-`.github/workflows/ci-cd.yml` runs on every push and pull request to `main`:
-
-```mermaid
-flowchart LR
-    A[Backend lint + pytest] --> G
-    B[Frontend lint + build] --> G
-    C[SAST<br/>Bandit + Semgrep] --> G
-    D[SCA<br/>pip-audit + npm audit] --> G
-    E[Secret scan<br/>Gitleaks] --> G
-    F[IaC scan<br/>Trivy config] --> G
-    G[Build images<br/>backend + frontend] --> H[Trivy scan<br/>HIGH/CRITICAL gate]
-    H --> I[Push to GHCR<br/>tag = commit SHA]
-    I --> J[kind cluster<br/>helm install + helm test]
-    J --> K[Promote SHA<br/>in gitops/]
-```
-
-| Stage | What fails the build |
-|---|---|
-| Backend | Ruff lint/format errors, any failing pytest case |
-| Frontend | ESLint errors, build errors |
-| Security | see [DevSecOps](#devsecops) |
-| Images | Dockerfile build errors, fixable HIGH/CRITICAL vulnerabilities |
-| Deploy | pods not Ready within 6 minutes, failing `helm test` |
-
-Images are tagged with the full commit SHA (never `latest`), so every running pod can be traced back
-to the exact commit. Pull requests run every check but do not push images or deploy.
-
-## DevSecOps
-
-Security runs as parallel jobs; the images are only built if **all** of them pass.
-
-| Layer | Tool | Scope | Gate |
-|---|---|---|---|
-| SAST | Bandit | Python source | medium+ severity and confidence |
-| SAST | Semgrep (`p/default`) | Python, JavaScript, Dockerfiles, YAML | ERROR findings |
-| SCA | pip-audit | backend dependencies | any known vulnerability |
-| SCA | npm audit | frontend runtime dependencies | high+ |
-| Secrets | Gitleaks | the full Git history | any secret |
-| IaC | Trivy config | Helm chart, Kubernetes, Terraform, Dockerfiles | HIGH/CRITICAL |
-| Containers | Trivy image | both images (OS packages + libraries) | fixable HIGH/CRITICAL |
-
-Trivy results are also uploaded to **GitHub code scanning** (Security tab).
-
-**What Trivy scans and what the result means:** Trivy inventories every OS package in the image (Debian
-for the backend, Alpine for the frontend) and every application library, and matches their versions
-against vulnerability databases. A clean result means no HIGH or CRITICAL vulnerability with an
-available fix is present, because the Dockerfiles apply OS security updates and the dependencies are
-current; unfixed findings are reported but do not block, since nothing can be upgraded yet.
-
-The IaC scan found a real issue during development (PostgreSQL without a read-only root filesystem),
-which was fixed. Two findings in the EKS module are accepted with written justifications in
-[`security/.trivyignore`](security/.trivyignore). Run every gate locally with `security/run-local-scans.sh`.
-
-Runtime hardening: non-root containers, read-only root filesystems, all Linux capabilities dropped,
-`RuntimeDefault` seccomp, the namespace enforces the **restricted** Pod Security Standard, and a
-NetworkPolicy isolates the database.
-
-## Monitoring and logs
-
-```bash
-helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-helm upgrade --install monitoring prometheus-community/kube-prometheus-stack \
-  -n monitoring --create-namespace -f monitoring/kube-prometheus-stack-values.yaml
-# re-deploy OpsPulse so the ServiceMonitor, alerts and dashboard are created
-```
-
-- **Metrics:** `/metrics` exposes HTTP request rate/latency/status plus business metrics
-  (`opspulse_active_incidents`, `opspulse_incidents_declared_total`, `opspulse_incidents_resolved_total`,
-  `opspulse_incident_resolution_seconds`). A ServiceMonitor makes Prometheus scrape every backend pod.
-- **Dashboard:** "OpsPulse — Service Overview" is provisioned automatically: request rate, error rate,
-  p50/p95/p99 latency, status codes, active incidents by severity, CPU and memory per pod.
-- **Alerts** (PrometheusRule): backend down, error rate above 5%, p95 latency above 1s, SEV1 open.
-- **Logs:** one JSON object per line with request ID, method, path, status and duration, e.g.
-  `kubectl logs -n opspulse deploy/opspulse-backend | grep '"status": 5'`.
-
-```bash
-kubectl port-forward -n monitoring svc/monitoring-kube-prometheus-prometheus 9090   # Prometheus
-kubectl port-forward -n monitoring svc/monitoring-grafana 3001:80                     # Grafana
-kubectl get secret -n monitoring monitoring-grafana -o jsonpath='{.data.admin-password}' | base64 -d
-```
-
-## GitOps with Argo CD
-
-Git is the source of truth for what runs in the cluster. The chart lives in `helm/opspulse`; the
-environment-specific values (image tags) live in `gitops/environments/production/values.yaml`, which the
-pipeline updates after the images pass every gate. Argo CD watches the repository and reconciles the
-cluster; `selfHeal` reverts manual changes and `prune` removes resources deleted from Git.
-
-The Application enables `ServerSideDiff=true` so Argo CD compares the live resources with the state
-predicted by Kubernetes. This resolved a repeated `OutOfSync/Healthy` condition on the PostgreSQL
-StatefulSet during the Codespaces demo, even though each sync operation succeeded.
-
-```bash
-kubectl apply -f kubernetes/namespace.yaml
-kubectl create secret generic opspulse-db -n opspulse \
-  --from-literal=postgres-password="$(openssl rand -hex 16)"     # once; never stored in Git
-kubectl apply -f gitops/argocd/project.yaml -f gitops/argocd/application.yaml
-```
-
-**Live demo:** change the UI → `git push` → the pipeline builds, scans and promotes the new SHA → Argo CD
-syncs → the application footer shows the new commit.
-
-## Troubleshooting challenge
-
-`kubernetes/troubleshooting/challenge.sh` deliberately breaks the running release in seven ways:
-bad image tag, wrong database password, Service selector typo, broken readiness probe, memory limit too
-low, unschedulable CPU request and a wrong Ingress backend. Each one is documented in
-[`docs/troubleshooting.md`](docs/troubleshooting.md): symptom, investigation, root cause, fix and verification.
-
-```bash
-kubernetes/troubleshooting/challenge.sh list
-kubernetes/troubleshooting/challenge.sh break 3
-kubernetes/troubleshooting/challenge.sh fix 3
-```
-
-## Screenshots
-
-The orbital mission-control interface below was verified against the local API with isolated demo
-data, including incident declaration, resolution, search, service navigation and the public status page.
-
-![OpsPulse orbital overview](docs/screenshots/overview-desktop.png)
-
-[View the mobile layout](docs/screenshots/overview-mobile.png).
-
-Deployment evidence for Kubernetes, CI/CD, Argo CD, Prometheus/Grafana and the final AWS infrastructure
-demo is still pending. The application previews above do not represent an AWS deployment.
-
-## Lessons learned
-
-- **Security gates catch real things.** The IaC scan flagged a writable Postgres filesystem; dependency
-  pins have to be refreshed regularly or the SCA gate fails the build, which is the point.
-- **Readiness is not liveness.** `/health` only says the process is up; `/ready` checks the database, so
-  Kubernetes stops sending traffic to a replica that cannot serve it instead of restarting it.
-- **Migrations need coordination.** Running Alembic in an init container behind a Postgres advisory lock
-  avoids races when several replicas start together.
-- **Never put secrets in values files.** The chart takes a password at install time or an existing
-  Secret, and Gitleaks scans the whole history on every push.
-- **Tag images by commit SHA.** It makes rollbacks exact and lets GitOps promote a specific build.
-- **Small details break containers.** A tool that looks up the current user fails when the uid has no
-  passwd entry; that is why the wait-for-db check passes `-U` explicitly.
-- **Resource limits matter on small clusters.** Monitoring, GitOps and the app compete for memory on a
-  laptop; requests and limits keep everything schedulable.
-
-## License
-
-[MIT](LICENSE) © 2026 Chhavi Ahlawat
+</div>
