@@ -230,6 +230,10 @@ The API exposes request metrics and business metrics such as active incidents, d
 
 The dashboard covers request rate, errors, p50/p95/p99 latency, HTTP status codes, active incidents by severity, and pod resources. Alerts cover an unavailable backend, elevated errors, high latency and an open SEV1 incident. JSON logs attach a request ID, route, status code and duration to each request.
 
+![Live Grafana dashboard showing request rates, latency, incident severity and backend resource usage](docs/screenshots/grafana-dashboard.png)
+
+*Captured from the existing Codespaces minikube cluster on 15 October 2026 (IST). A short batch of 240 read-only API requests populated the request and latency charts. The dashboard shows two backend replicas and three existing active incidents. Panels without recorded 5xx or incident-transition series show “No data”; no failures or incident changes were injected for the screenshot.*
+
 [Monitoring configuration](monitoring/kube-prometheus-stack-values.yaml) · [Installation and access](docs/operations-guide.md#monitoring-and-logs)
 
 ### Keep desired state in Git with Argo CD
@@ -238,7 +242,9 @@ Argo CD reads the Helm chart and production image tags from the same repository 
 
 The Application uses `ServerSideDiff=true`, added while investigating repeated StatefulSet differences. [Read the Application](gitops/argocd/application.yaml) and [GitOps setup](docs/operations-guide.md#gitops-with-argo-cd).
 
-The monitoring and GitOps configuration is implemented. Live dashboard screenshots are omitted; the CI evidence above verifies the automated deployment path.
+![Argo CD application tree showing OpsPulse Synced, Healthy and a successful sync](docs/screenshots/argocd-application.png)
+
+*The existing development cluster was resumed and verified **Synced / Healthy**, with **Sync OK** at revision `91e3b64`. The tree shows the real Helm-managed workloads and supporting resources. These Grafana and Argo CD captures are development-cluster evidence; AWS deployment remains deferred.*
 
 ## ☁️ AWS demo: designed and ready to launch later
 
@@ -338,9 +344,9 @@ docs/                    Operations guide, troubleshooting and screenshots
 | Application | Local UI/API walkthrough and screenshots | User authentication and permissions |
 | Backend tests | 30 passing, 97% coverage in cited CI run | Extend coverage as features grow |
 | Delivery | All 10 CI jobs passed; kind install and Helm smoke test passed | Capture the next end-to-end live GitOps change |
-| Kubernetes | Chart, scaling, probes, persistence and network policies | Fresh screenshots from the resumed development cluster |
-| GitOps | Argo CD manifests and SHA promotion | Current Synced/Healthy screen |
-| Observability | Metrics, dashboard and alert configuration | Live Grafana graphs and Prometheus targets |
+| Kubernetes | Existing minikube cluster resumed; frontend, backend and PostgreSQL ready | AWS demo verification remains separate |
+| GitOps | Live Argo CD **Synced / Healthy** screenshot and successful sync | Capture a future application change through the full pipeline |
+| Observability | Live Grafana request, latency, incident and resource graphs; two backend scrape targets up | Alert firing/recovery walkthrough and Prometheus targets screen |
 | AWS | Authentication, regional preflight and Terraform plan verified | Provision, demonstrate, record evidence, then destroy |
 
 Screenshot provenance and the remaining capture checklist are in [the screenshot index](docs/screenshots/README.md). No personal AWS billing details, credentials or access tokens are included in the public evidence.
