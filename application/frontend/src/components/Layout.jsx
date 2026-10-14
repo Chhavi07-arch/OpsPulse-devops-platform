@@ -1,19 +1,19 @@
 import { useEffect } from "react";
-import { NavLink, Outlet } from "react-router-dom";
-import { Activity, ExternalLink, GitCommitHorizontal, LayoutDashboard, Moon, Server, Siren, Sun } from "lucide-react";
+import { Link, NavLink, Outlet } from "react-router-dom";
+import { ArrowUpRight, GitCommitHorizontal, Moon, Orbit, Sun } from "lucide-react";
 import { api } from "../lib/api";
 import { useLocalStorage, usePolling } from "../lib/hooks";
 
 const NAV = [
-  { to: "/", label: "Overview", icon: LayoutDashboard, end: true },
-  { to: "/incidents", label: "Incidents", icon: Siren },
-  { to: "/services", label: "Services", icon: Server },
+  { to: "/", label: "Overview", end: true },
+  { to: "/incidents", label: "Incidents" },
+  { to: "/services", label: "Services" },
 ];
 
 export default function Layout() {
   const [theme, setTheme] = useLocalStorage("opspulse.theme", "dark");
   const { data: meta } = usePolling(api.meta, [], 60000);
-  const { data: stats } = usePolling(() => api.stats(), []);
+  const { data: stats, error } = usePolling(() => api.stats(), []);
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
@@ -21,55 +21,41 @@ export default function Layout() {
 
   return (
     <div className="shell">
-      <aside className="sidebar">
-        <div className="brand">
-          <span className="brand__logo">
-            <Activity size={20} />
-          </span>
-          <span className="brand__name">OpsPulse</span>
-        </div>
-
-        <nav className="nav">
-          {NAV.map(({ to, label, icon: Icon, end }) => (
+      <a className="skip-link" href="#main-content">Skip to content</a>
+      <header className="topbar">
+        <Link to="/" className="brand" aria-label="OpsPulse home">
+          <span className="brand__logo"><Orbit size={25} strokeWidth={1.4} /></span>
+          <span className="brand__name">OPS<span>PULSE</span><small>MISSION CONTROL</small></span>
+        </Link>
+        <nav className="nav" aria-label="Main navigation">
+          {NAV.map(({ to, label, end }) => (
             <NavLink key={to} to={to} end={end} className="nav__link">
-              <Icon size={18} />
-              <span>{label}</span>
-              {to === "/incidents" && stats?.active_incidents > 0 && (
-                <span className="nav__badge">{stats.active_incidents}</span>
-              )}
+              <span className="nav__indicator" />{label}
+              {to === "/incidents" && stats?.active_incidents > 0 && <span className="nav__badge">{stats.active_incidents}</span>}
             </NavLink>
           ))}
-          <a className="nav__link" href="/status" target="_blank" rel="noreferrer">
-            <ExternalLink size={18} />
-            <span>Status page</span>
-          </a>
         </nav>
-
-        <div className="sidebar__footer">
-          <button
-            className="theme-toggle"
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            aria-label="Toggle colour theme"
-          >
-            {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
-            {theme === "dark" ? "Light mode" : "Dark mode"}
+        <div className="topbar__actions">
+          <button className="icon-btn theme-toggle" onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+            title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}>
+            {theme === "dark" ? <Sun size={17} /> : <Moon size={17} />}
           </button>
-          {meta && (
-            <div className="build" title="Build running in this environment">
-              <span className={`env env--${meta.environment}`}>{meta.environment}</span>
-              <span className="build__sha">
-                <GitCommitHorizontal size={14} />
-                {meta.git_sha.slice(0, 7)}
-              </span>
-              <span className="build__version">v{meta.version}</span>
-            </div>
-          )}
+          <Link to="/status" className="topbar__status">Public status <ArrowUpRight size={15} /></Link>
         </div>
-      </aside>
-
-      <main className="main">
-        <Outlet />
-      </main>
+      </header>
+      <main className="main" id="main-content"><Outlet /></main>
+      <footer className="shell-footer">
+        <span className="connection"><span className={`connection__dot${error ? " connection__dot--error" : ""}`} />
+          {error ? "API connection interrupted" : stats ? "Connected to OpsPulse" : "Establishing connection"}
+        </span>
+        {meta && <div className="build" title="Build running in this environment">
+          <span className="env">{meta.environment}</span>
+          <span className="build__sha"><GitCommitHorizontal size={13} />{meta.git_sha.slice(0, 7)}</span>
+          <span>v{meta.version}</span>
+        </div>}
+        <span className="shell-footer__note">A clearer view. A faster response.</span>
+      </footer>
     </div>
   );
 }

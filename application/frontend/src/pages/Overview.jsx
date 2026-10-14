@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Area, AreaChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { AlertOctagon, CheckCircle2, Flame, Plus, Server, Timer } from "lucide-react";
+import { AlertOctagon, ArrowUpRight, CheckCircle2, Flame, Server, Timer } from "lucide-react";
 import DeclareIncidentModal from "../components/DeclareIncidentModal";
+import OrbitHero from "../components/OrbitHero";
 import {
   Card,
   ErrorState,
   IncidentStatusPill,
-  PageHeader,
   SeverityBadge,
   Skeleton,
   StatusDot,
@@ -18,17 +18,15 @@ import { SEVERITIES } from "../lib/constants";
 import { formatDay, formatDuration, timeAgo } from "../lib/format";
 import { useNow, usePolling } from "../lib/hooks";
 
-function Kpi({ icon: Icon, label, value, hint, tone = "accent" }) {
+function Kpi({ icon: Icon, label, value, hint, index, tone = "accent" }) {
   return (
     <div className={`kpi kpi--${tone}`}>
-      <span className="kpi__icon">
-        <Icon size={20} />
-      </span>
-      <div>
-        <p className="kpi__label">{label}</p>
+      <div className="kpi__top"><p className="kpi__label">{label}</p><Icon size={16} /></div>
+      <div className="kpi__body">
         <p className="kpi__value">{value}</p>
-        {hint && <p className="kpi__hint">{hint}</p>}
+        <span className="kpi__index">{index}</span>
       </div>
+      {hint && <p className="kpi__hint"><span />{hint}</p>}
     </div>
   );
 }
@@ -40,15 +38,15 @@ function TrendChart({ trend }) {
       <AreaChart data={data} margin={{ top: 10, right: 8, left: -18, bottom: 0 }}>
         <defs>
           <linearGradient id="opened" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="var(--danger)" stopOpacity={0.45} />
-            <stop offset="100%" stopColor="var(--danger)" stopOpacity={0} />
+            <stop offset="0%" stopColor="var(--orange)" stopOpacity={0.18} />
+            <stop offset="100%" stopColor="var(--orange)" stopOpacity={0} />
           </linearGradient>
           <linearGradient id="resolved" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="var(--ok)" stopOpacity={0.4} />
+            <stop offset="0%" stopColor="var(--ok)" stopOpacity={0.15} />
             <stop offset="100%" stopColor="var(--ok)" stopOpacity={0} />
           </linearGradient>
         </defs>
-        <CartesianGrid stroke="var(--border)" vertical={false} />
+        <CartesianGrid stroke="var(--border)" strokeDasharray="3 6" vertical={false} />
         <XAxis dataKey="label" tick={{ fill: "var(--text-muted)", fontSize: 12 }} axisLine={false} tickLine={false} />
         <YAxis allowDecimals={false} tick={{ fill: "var(--text-muted)", fontSize: 12 }} axisLine={false} tickLine={false} />
         <Tooltip
@@ -66,7 +64,7 @@ function TrendChart({ trend }) {
           type="monotone"
           dataKey="opened"
           name="Opened"
-          stroke="var(--danger)"
+          stroke="var(--orange)"
           strokeWidth={2}
           fill="url(#opened)"
         />
@@ -118,17 +116,11 @@ export default function Overview() {
 
   return (
     <>
-      <PageHeader
-        title="Overview"
-        subtitle={s ? `Live health across ${s.services_total} services` : "Loading live health…"}
-      >
-        <span className="live">
-          <span className="live__dot" /> Live
-        </span>
-        <button className="btn btn--danger" onClick={() => setDeclaring(true)}>
-          <Plus size={16} /> Declare incident
-        </button>
-      </PageHeader>
+      <OrbitHero stats={s} updatedAt={stats.updatedAt} onDeclare={() => setDeclaring(true)} />
+      <div className="section-heading" id="operations">
+        <div><span className="eyebrow">THE BIG PICTURE</span><h2>Operations overview<span>.</span></h2></div>
+        <span className="section-heading__meta">LIVE DATA <span className="signal-mark" /></span>
+      </div>
 
       {critical > 0 && (
         <Link to="/incidents?active=true" className="alert-banner">
@@ -137,8 +129,9 @@ export default function Overview() {
             <strong>
               {critical} high-severity incident{critical > 1 ? "s" : ""} in progress.
             </strong>{" "}
-            Customers are impacted — review the response.
+            Review the response.
           </span>
+          <ArrowUpRight size={17} className="alert-banner__arrow" />
         </Link>
       )}
 
@@ -146,6 +139,7 @@ export default function Overview() {
         {s ? (
           <>
             <Kpi
+              index="01"
               icon={Flame}
               tone={s.active_incidents ? "danger" : "ok"}
               label="Active incidents"
@@ -153,12 +147,14 @@ export default function Overview() {
               hint={s.active_incidents ? `${critical} SEV1/SEV2` : "Nothing on fire"}
             />
             <Kpi
+              index="02"
               icon={Timer}
               label="Mean time to resolve"
               value={formatDuration(s.mttr_minutes)}
               hint="Last 30 days"
             />
             <Kpi
+              index="03"
               icon={Server}
               tone={s.services_operational === s.services_total ? "ok" : "warn"}
               label="Services operational"
@@ -169,7 +165,7 @@ export default function Overview() {
                   : "No services yet"
               }
             />
-            <Kpi icon={CheckCircle2} tone="ok" label="Resolved" value={s.resolved_last_30d} hint="Last 30 days" />
+            <Kpi index="04" icon={CheckCircle2} tone="ok" label="Resolved incidents" value={s.resolved_last_30d} hint="Last 30 days" />
           </>
         ) : (
           <Skeleton height={96} count={4} />

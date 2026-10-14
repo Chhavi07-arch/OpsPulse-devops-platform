@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Activity, AlertTriangle, CheckCircle2, XOctagon } from "lucide-react";
+import { Orbit, AlertTriangle, CheckCircle2, XOctagon } from "lucide-react";
 import UptimeBars from "../components/UptimeBars";
 import { ErrorState, SeverityBadge, ServiceStatusPill, Skeleton } from "../components/ui";
 import { api } from "../lib/api";
@@ -18,7 +18,7 @@ export default function StatusPage() {
       <header className="public__header">
         <Link to="/" className="brand">
           <span className="brand__logo">
-            <Activity size={20} />
+            <Orbit size={25} strokeWidth={1.4} />
           </span>
           <span className="brand__name">OpsPulse Status</span>
         </Link>
