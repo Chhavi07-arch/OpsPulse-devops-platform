@@ -1,8 +1,10 @@
 # OpsPulse demo 🚀
 
-[Watch / download the narrated demo](OpsPulse-Demo.mp4) · [Subtitles](OpsPulse-Demo.srt) · [PowerPoint](OpsPulse-Mission-Control.pptx) · [Presentation PDF](OpsPulse-Mission-Control.pdf)
+[Watch / download the narrated demo](OpsPulse-Demo-Voiceover.mp4) · [Voiceover MP3](OpsPulse-Voiceover.mp3) · [Subtitles](OpsPulse-Demo.srt) · [PowerPoint](OpsPulse-Mission-Control.pptx) · [Presentation PDF](OpsPulse-Mission-Control.pdf)
 
 A short walkthrough of the running application and its delivery and monitoring tools. The video includes a synthetic English voiceover, visible pointer/click highlights, captions and chapter titles matching the space-and-mint UI. Download the MP4 if your GitHub view does not play it inline.
+
+The current download is **OpsPulse-Demo-Voiceover.mp4**, with English narration in both stereo channels. Open this updated file rather than an older download. For a presentation, download it and open it in QuickTime Player or VLC; turn on the player's speaker control as well as your device volume. The separate MP3 contains the same narration and timing, so you can also check the sound independently.
 
 ## Chapters
 
@@ -32,4 +34,4 @@ A short walkthrough of the running application and its delivery and monitoring t
 - The voice is **synthetic narration**, not Chhavi’s recorded or cloned voice. Login steps and credentials are excluded from the finished video.
 - **No AWS resources were launched for this recording.** The prepared AWS demo remains separate.
 
-Video: **4:42**, 1920 × 1080, H.264 video and AAC audio.
+Video: **4:42**, 1920 × 1080, H.264 video and stereo AAC-LC audio (48 kHz, 192 kb/s). Narration is normalized to approximately −14 LUFS with peaks below 0 dBFS. The re-export preserves the original visuals and burned-in captions.
