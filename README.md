@@ -25,6 +25,8 @@
 
 OpsPulse combines a real **React + FastAPI incident-management application** with the platform around it: Docker, Helm, GitHub Actions, security scanning, Argo CD, Prometheus/Grafana and Terraform for an AWS EKS demo. The dark orbital theme pairs a mint-green accent with an Earth backdrop, while the workflows remain practical and readable.
 
+**Demo video:** [Watch the narrated walkthrough](demo/OpsPulse-Demo.mp4) · [Chapters and subtitles](demo/README.md). A 4m 42s UI recording in 1080p with synthetic English narration, covering the incident lifecycle, all main pages, CI, GitOps and monitoring.
+
 **Presentation:** [Download the PowerPoint](demo/OpsPulse-Mission-Control.pptx) · [View the PDF](demo/OpsPulse-Mission-Control.pdf). The 19-slide deck includes presenter notes and source references.
 
 **Reading guide:** this page is the illustrated project tour. The [operations guide](docs/operations-guide.md) contains the detailed setup commands, recovery steps and teardown procedures.
@@ -335,7 +337,7 @@ gitops/                  Argo CD Application, AppProject and production image ta
 monitoring/              Prometheus/Grafana installation values
 security/                Scan configuration and documented exceptions
 docs/                    Operations guide, troubleshooting and screenshots
-demo/                    PowerPoint, PDF and future demo video
+demo/                    Narrated demo video, subtitles, PowerPoint and PDF
 ```
 
 ## 📸 Evidence and project status
