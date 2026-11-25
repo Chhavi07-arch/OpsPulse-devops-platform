@@ -33,6 +33,9 @@ return 404, not the frontend HTML.
 
 ## Current preparation status
 
-The deployment configuration is prepared locally. Publishing still requires
-network access to GitHub and an authenticated Render connection. A public URL is
-not available until Render confirms a successful deployment.
+The `deploy/career-demo` branch is published on GitHub. The frontend production
+build, all 31 backend tests, and a hosted-demo smoke check passed. The smoke check
+covered seeded data, browser routes, readiness, and declaring, resolving, and
+deleting an incident. Publishing the service still requires an authenticated
+Render connection. A public URL is not available until Render confirms a
+successful deployment.
