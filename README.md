@@ -31,10 +31,11 @@ OpsPulse combines a real **React + FastAPI incident-management application** wit
 
 **Reading guide:** this page is the illustrated project tour. The [operations guide](docs/operations-guide.md) contains the detailed setup commands, recovery steps and teardown procedures.
 
-**Public web demo deployment:** this branch adds a [Render Blueprint](render.yaml)
+**[Live web demo](https://opspulse-chhavi-demo.onrender.com)** — this branch adds a [Render Blueprint](render.yaml)
 and a [single-service demo guide](docs/public-demo.md). The demo uses shared,
-disposable sample data. This configuration is prepared for publication; a live
-URL will be added only after the hosting service confirms deployment.
+disposable sample data on Render's free plan. Verified on November 25, 2026,
+including incident creation, resolution, and public-status updates. The service
+may need time to wake up after inactivity.
 
 ## ✨ At a glance
 
