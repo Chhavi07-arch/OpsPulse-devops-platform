@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: opspulse-chhavi-demo
+    runtime: docker
+    plan: free
+    region: singapore
+    repo: https://github.com/Chhavi07-arch/OpsPulse-devops-platform
+    branch: deploy/career-demo
+    dockerfilePath: ./docker/demo/Dockerfile
+    dockerContext: .
+    healthCheckPath: /ready
+    autoDeployTrigger: "off"

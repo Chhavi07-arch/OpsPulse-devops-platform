@@ -1567,3 +1567,11 @@ textarea {
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
+.demo-notice {
+  margin: 0 0 1.25rem;
+  padding: 0.875rem 1rem;
+  border: 1px solid currentColor;
+  border-radius: 0.75rem;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}

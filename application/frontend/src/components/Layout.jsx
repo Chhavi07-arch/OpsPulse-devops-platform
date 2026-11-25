@@ -44,7 +44,14 @@ export default function Layout() {
           <Link to="/status" className="topbar__status">Public status <ArrowUpRight size={15} /></Link>
         </div>
       </header>
-      <main className="main" id="main-content"><Outlet /></main>
+      <main className="main" id="main-content">
+        {meta?.environment === "hosted-demo" && (
+          <p className="demo-notice" role="note">
+            Interactive demo with shared sample data. Changes may reset on restart. Please use fictional details.
+          </p>
+        )}
+        <Outlet />
+      </main>
       <footer className="shell-footer">
         <span className="connection"><span className={`connection__dot${error ? " connection__dot--error" : ""}`} />
           {error ? "API connection interrupted" : stats ? "Connected to OpsPulse" : "Establishing connection"}

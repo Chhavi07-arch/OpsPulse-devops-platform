@@ -31,6 +31,11 @@ OpsPulse combines a real **React + FastAPI incident-management application** wit
 
 **Reading guide:** this page is the illustrated project tour. The [operations guide](docs/operations-guide.md) contains the detailed setup commands, recovery steps and teardown procedures.
 
+**Public web demo deployment:** this branch adds a [Render Blueprint](render.yaml)
+and a [single-service demo guide](docs/public-demo.md). The demo uses shared,
+disposable sample data. This configuration is prepared for publication; a live
+URL will be added only after the hosting service confirms deployment.
+
 ## ✨ At a glance
 
 | Product | Delivery platform | Verified evidence |
